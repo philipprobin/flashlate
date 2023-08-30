@@ -1,3 +1,4 @@
+import 'package:double_back_to_close_app/double_back_to_close_app.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flashlate/screens/list_page.dart';
@@ -16,49 +17,46 @@ void main() async {
 class MyApp extends StatelessWidget {
   MyApp({super.key});
 
-  static const  MaterialColor customBlue = MaterialColor(
-    0xFFE1F0FF, // Primary color value
-      <int, Color>{
-        50: Color(0xFFE1F0FF), // Lightest shade
-        100: Color(0xFFB3D1FF),
-        200: Color(0xFF80ABFF),
-        300: Color(0xFF4D85FF),
-        400: Color(0xFF266CFF),
-        500: Color(0xFF0077FF), // Default shade
-        600: Color(0xFF006EFF),
-        700: Color(0xFF0065FF),
-        800: Color(0xFF005BFF),
-        900: Color(0xFF004AFF), // Darkest shade
-      },
+  static const MaterialColor customGray = MaterialColor(
+    0xFFEDEDED, // Primary color value
+    <int, Color>{
+      50: Color(0xFFFAFAFA), // Lightest shade
+      100: Color(0xFFF5F5F5),
+      200: Color(0xFFEDEDED),
+      300: Color(0xFFE0E0E0),
+      400: Color(0xFFBDBDBD),
+      500: Color(0xFF9E9E9E), // Default shade
+      600: Color(0xFF757575),
+      700: Color(0xFF616161),
+      800: Color(0xFF424242),
+      900: Color(0xFF212121), // Darkest shade
+    },
   );
 
-
-
-      // This widget is the root of your application.
+  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: ThemeData(
-        // Define the default brightness and colors.
-        brightness: Brightness.dark,
-        primaryColor: Colors.lightBlue[300],
-
-        // Define the default font family.
-        fontFamily: 'Georgia',
+        primaryColor: customGray[700],
+        secondaryHeaderColor: Colors.grey.shade200,// Set the accent color
+        scaffoldBackgroundColor: Colors.grey.shade200, // Set the scaffold background color
+        appBarTheme: AppBarTheme(
+          color: Colors.grey.shade300, // Set the app bar color
+        ), colorScheme: ColorScheme.fromSwatch().copyWith(secondary: Colors.grey),
 
         // Define the default `TextTheme`. Use this to specify the default
         // text styling for headlines, titles, bodies of text, and more.
-        textTheme: const TextTheme(
-          displayLarge: TextStyle(fontSize: 72, fontWeight: FontWeight.bold),
-          titleLarge: TextStyle(fontSize: 36, fontStyle: FontStyle.italic),
-          bodyMedium: TextStyle(fontSize: 14, fontFamily: 'Hind'),
-        ),
       ),
-
-
       debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: MyHomePage(title: 'Flutter Demo Home Page'),
+      routes: {
+        '/main': (context) => MainPage(),
+        '/practice': (context) => PracticePage(),
+        '/list': (context) => ListPage(),
+        '/auth': (context) => const AuthenticationService(),
+      },
     );
   }
 }
@@ -73,23 +71,48 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  int _currentIndex = 1;
+  final List<Widget> _tabs = [
+    PracticePage(),
+    const AuthenticationService(),
+    ListPage(),
+  ];
+
+  void _onTabTapped(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        primaryColor: Colors.green
+    return Scaffold(
+      body: DoubleBackToCloseApp(
+        child: _tabs[_currentIndex],
+        snackBar: const SnackBar(
+          content: Text('Zum beenden nochmal Tippen'),
+        ),
       ),
-      home: AuthenticationService(),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        selectedItemColor: Colors.black,
+        onTap: _onTabTapped,
+        items: const [
 
-      routes: {
-        '/main': (context) => MainPage(),
-        '/practice': (context) => PracticePage(),
-        '/list': (context) => ListPage(),
-      },
+          BottomNavigationBarItem(
+            icon: Icon(Icons.play_circle_filled),
+            label: 'Practice',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Main',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.list),
+            label: 'List',
+          ),
+        ],
+      ),
     );
   }
 }
-
-

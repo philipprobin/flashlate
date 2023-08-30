@@ -1,4 +1,5 @@
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -36,6 +37,17 @@ class _AuthenticationServiceState extends State<AuthenticationService> {
           );
           final UserCredential userCredential = await _auth.signInWithCredential(credential);
           debugPrint('Signed in with Google: ${userCredential.user!.displayName}');
+
+          // Add user's UID as a document in the "flashcards" collection if not already exists
+          final CollectionReference flashcardsCollection = FirebaseFirestore.instance.collection('flashcards');
+          final DocumentSnapshot userDoc = await flashcardsCollection.doc(userCredential.user!.uid).get();
+          if (!userDoc.exists) {
+            await flashcardsCollection.doc(userCredential.user!.uid).set({
+              'names': userCredential.user!.displayName,
+              // Add more fields if needed
+            });
+            debugPrint('User document added to flashcards collection.');
+          }
         }
       } catch (e) {
         debugPrint('Google Sign-In Error: $e');

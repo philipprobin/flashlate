@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
+import '../services/database_service.dart';
+import '../services/local_storage_service.dart';
+
 class PracticePage extends StatefulWidget {
   @override
   _PracticePageState createState() => _PracticePageState();
@@ -9,6 +12,7 @@ class PracticePage extends StatefulWidget {
 
 class _PracticePageState extends State<PracticePage> {
   List<Map<String, String>> storedData = [];
+  final databaseService = DatabaseService();
   PageController pageController = PageController(initialPage: 0);
   int currentIndex = 0;
   bool showFrontSide = true;
@@ -20,17 +24,8 @@ class _PracticePageState extends State<PracticePage> {
   }
 
   Future<void> _fetchStoredData() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String jsonData = prefs.getString('data') ?? '[]';
-
+    storedData = await databaseService.getCardsForCurrentDeck();
     setState(() {
-      Map<String, dynamic> dataList = json.decode(jsonData);
-      for (var entry in dataList.entries) {
-        Map<String, String> entryMap = {
-          entry.key: entry.value,
-        };
-        storedData.add(entryMap);
-      }
 
       debugPrint("list elements ${storedData.length}");
       currentIndex = 0;
@@ -64,8 +59,10 @@ class _PracticePageState extends State<PracticePage> {
   Widget build(BuildContext context) {
     return Scaffold(
 
-      backgroundColor: Colors.amberAccent.shade100,
+      backgroundColor: Theme.of(context).primaryColor,
       appBar: AppBar(
+
+        iconTheme: IconThemeData(color: Theme.of(context).secondaryHeaderColor, ),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
