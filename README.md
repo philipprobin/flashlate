@@ -27,6 +27,8 @@ The user can train his memory skills and use one of the best memorization techni
 
 The user gets an overview over all his practice decks. Here can decks be added and removed.
 
+<!-- To display images at half size, set the width attribute to 50% -->
+<img src="images/main_page_full.jpeg" width="50%">
 
 ### Github Collaboration
 #### First Steps
