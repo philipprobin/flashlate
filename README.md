@@ -2,33 +2,36 @@
 
 Flashcard app with integrated translate function
 
-![image](images/main_page_full.jpeg)
+<img src="images/main_page_full.jpeg" width="40%">
 
 ## My Idea:
 
 Creating a translate Application that combines translations, flashcards, overviews and konjugations.
-All in one App
+
+**All in one App**
 
 ## The Main Page
 
-![image](images/main_page_half.jpeg)
+
+<img src="images/main_page_half.jpeg" width="40%">
 
 The user can directly click on the language field, he wants to choose, without unnecessarily switching the language and clicking on the text field again.
 
 ## The Practice Page
 
-![image](images/practice_page.jpeg)
+<img src="images/practice_page.jpeg" width="40%">
 
 The user can train his memory skills and use one of the best memorization techniques to learn a new language.
 
 ## The List Page
 
-![image](images/list_page.jpeg)
+<img src="images/list_page.jpeg" width="40%">
 
-The user gets an overview over all his practice decks. Here can decks be added and removed.
+The user gets an overview over all his practice decks. 
 
-<!-- To display images at half size, set the width attribute to 50% -->
-<img src="images/main_page_full.jpeg" width="30%">
+Here can decks be added and removed.
+
+
 
 ### Github Collaboration
 #### First Steps
