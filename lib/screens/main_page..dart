@@ -1,14 +1,9 @@
-import 'dart:convert';
-import 'dart:ffi';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fk_toggle/fk_toggle.dart';
 import 'package:flashlate/services/database_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flashlate/services/translation_service.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../services/local_storage_service.dart';
 import '../widgets/custom_app_bar_widget.dart';
 
@@ -53,11 +48,13 @@ class _MainPageState extends State<MainPage> {
 
     if (fetchedItems.isEmpty) {
       // TODO: pull from db?
+      // TODO: add App Icon
+      // TODO: add more langs
     }
 
     if (!fetchedItems.contains(currentDeck)) {
       debugPrint("not contains :(");
-      await localStorageService.addDeck(currentDeck);
+      await LocalStorageService.addDeck(currentDeck, true);
       fetchedItems = await LocalStorageService.getDeckNames();
     }
 
@@ -123,32 +120,50 @@ class _MainPageState extends State<MainPage> {
                               ),
                               ElevatedButton.icon(
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: translatedText.isNotEmpty ? Theme.of(context).highlightColor : Colors.grey, // Use primaryColor when text is not empty, otherwise gray
+                                  backgroundColor: translatedText.isNotEmpty
+                                      ? Theme.of(context).highlightColor
+                                      : Colors
+                                          .grey, // Use primaryColor when text is not empty, otherwise gray
                                 ),
-                                onPressed: translatedText.isNotEmpty // Enable the button only if translatedText is not empty
+                                onPressed: translatedText
+                                        .isNotEmpty // Enable the button only if translatedText is not empty
                                     ? () async {
-                                  final databaseService = DatabaseService();
-                                  // add deckName to Decklist
-                                  String deckName = await LocalStorageService
-                                      .getCurrentDeck();
-                                  // local
-                                  // add card to Cardlist
-                                  LocalStorageService.addCardToLocalDeck(
-                                      deckName, {originalText: translatedText});
-                                  // upload
-                                  bool response = await databaseService.addCard(
-                                      deckName, originalText, translatedText);
-                                  if (!response) {
-                                    debugPrint('upload failed');
-                                  }
-                                  Future.delayed(const Duration(seconds: 1), () {
-                                    setState(() {
-                                      uploadSuccess = false;
-                                    });
-                                  });
-                                }
-                                    : null, // Disable the button when translatedText is empty
-                                icon: translatedText.isNotEmpty ? const Icon(Icons.add, color: Colors.white) : const Icon(Icons.add, color: Colors.grey),
+                                        final databaseService =
+                                            DatabaseService();
+                                        // add deckName to Decklist
+                                        String deckName =
+                                            await LocalStorageService
+                                                .getCurrentDeck();
+                                        // local
+                                        // add card to Cardlist
+                                        LocalStorageService.addCardToLocalDeck(
+                                            deckName,
+                                            {originalText.trim(): translatedText.trim()});
+                                        // upload
+                                        bool response =
+                                            await databaseService.addCard(
+                                                deckName,
+                                                originalText.trim(),
+                                                translatedText.trim());
+                                        if (!response) {
+                                          debugPrint('upload failed');
+                                        } else {
+                                          setState(() {
+                                            uploadSuccess = true;
+                                          });
+                                          Future.delayed(
+                                              const Duration(seconds: 1), () {
+                                            setState(() {
+                                              uploadSuccess = false;
+                                            });
+                                          });
+                                        }
+                                      }
+                                    : null,
+                                // Disable the button when translatedText is empty
+                                icon: translatedText.isNotEmpty
+                                    ? const Icon(Icons.add, color: Colors.white)
+                                    : const Icon(Icons.add, color: Colors.grey),
                                 label: const Text("add"),
                                 // Set the icon color
                               ),
@@ -273,8 +288,12 @@ class _MainPageState extends State<MainPage> {
                           child: GestureDetector(
                             onTap: () {
                               setState(() {
-                                topTextEditingController.text =
-                                    ''; // Clear the text
+                                if (editingMode) {
+                                  topTextEditingController.text = '';
+                                } else {
+                                  topTextEditingController.text = '';
+                                  bottomTextEditingController.text = '';
+                                }
                               });
                             },
                             child: Container(
@@ -354,8 +373,12 @@ class _MainPageState extends State<MainPage> {
                           child: GestureDetector(
                             onTap: () {
                               setState(() {
-                                bottomTextEditingController.text =
-                                    ''; // Clear the text
+                                if (editingMode) {
+                                  bottomTextEditingController.text = '';
+                                } else {
+                                  topTextEditingController.text = '';
+                                  bottomTextEditingController.text = '';
+                                }
                               });
                             },
                             child: const SizedBox(

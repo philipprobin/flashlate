@@ -1,6 +1,7 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flashlate/services/synchronize_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -53,7 +54,9 @@ class _AuthenticationServiceState extends State<AuthenticationService> {
         debugPrint('Google Sign-In Error: $e');
       }
     }
-    setState(() {}); // Update the widget's state after checking and signing in
+    setState(() {
+      SynchronizeService.writeDbToLocal();
+    }); // Update the widget's state after checking and signing in
   }
 
   @override

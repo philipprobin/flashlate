@@ -6,7 +6,7 @@ import 'local_storage_service.dart';
 
 class DatabaseService {
 
-  Future<Map<String, dynamic>> fetchUserDoc() async {
+  static Future<Map<String, dynamic>> fetchUserDoc() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       // User not authenticated, handle accordingly

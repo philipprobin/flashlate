@@ -6,6 +6,7 @@ class LocalStorageService {
   static const String _currentDeckKey = 'currentDeck';
 
   static Future<void> setCurrentDeck(String deckName) async {
+    // doesnt create entry for cards
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString(_currentDeckKey, deckName);
     debugPrint("current Deck was set $deckName");
@@ -14,8 +15,7 @@ class LocalStorageService {
   static Future<String> getCurrentDeck() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     if (prefs.getString(_currentDeckKey) == null) {
-      LocalStorageService localStorageService = LocalStorageService();
-      return await localStorageService.addDeck("Deck");
+      return await LocalStorageService.addDeck("Deck", true);
     } else {
       return prefs.getString(_currentDeckKey)!;
     }
@@ -38,14 +38,14 @@ class LocalStorageService {
     List<String> allDeckNames = await LocalStorageService.getDeckNames();
     String currentDeck = await LocalStorageService.getCurrentDeck();
     if (deckName == currentDeck) {
-      if(allDeckNames.length == 1){
+      if (allDeckNames.length == 1) {
         // only current is in list
         prefs.getString(_currentDeckKey) == null;
-      }else {
+      } else {
         await deleteDeckRefs(deckName);
         List<String> allDeckNames = await LocalStorageService.getDeckNames();
         LocalStorageService.setCurrentDeck(allDeckNames[0]);
-        return ;
+        return;
       }
     }
     await deleteDeckRefs(deckName);
@@ -72,8 +72,7 @@ class LocalStorageService {
     debugPrint("deckDeleted: $deckName");
   }
 
-
-  Future<String> addDeck(String deckName) async {
+  static Future<String> addDeck(String deckName, bool setCurrent) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
     // Retrieve the existing deck names from shared preferences
@@ -91,7 +90,10 @@ class LocalStorageService {
     }
 
     encodedDeck.add(deckName);
-    setCurrentDeck(deckName);
+
+    if (setCurrent) {
+      setCurrentDeck(deckName);
+    }
 
     // Save the updated deck names list to shared preferences
     prefs.setStringList("decks", encodedDeck);
@@ -99,7 +101,7 @@ class LocalStorageService {
     return deckName;
   }
 
-  static Future<void> addCardToLocalDeck(String listName, Map<String, dynamic> dict) async {
+  static Future<bool> addCardToLocalDeck(String listName, Map<String, dynamic> dict) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
     // Check if the SharedPreferences entry with the listName exists
@@ -120,24 +122,34 @@ class LocalStorageService {
       }
     }
 
-    // Add the new dictionary to the deck
-    deck.add(dict);
+    // Check if the dictionary already exists in the deck
+    bool dictionaryExists = deck.any((card) {
+      return card.toString() == dict.toString(); // You may want to compare more selectively.
+    });
 
-    // Save the updated deck to shared preferences
-    List<String> encodedUpdatedDeck = [];
+    if (!dictionaryExists) {
+      // Add the new dictionary to the deck
+      deck.add(dict);
 
-    for (Map<String, dynamic> deckDict in deck) {
-      debugPrint("hinzugefügt $deckDict");
-      String encodedDict = json.encode(deckDict);
-      encodedUpdatedDeck.add(encodedDict);
+      // Save the updated deck to shared preferences
+      List<String> encodedUpdatedDeck = [];
+
+      for (Map<String, dynamic> deckDict in deck) {
+        String encodedDict = json.encode(deckDict);
+        encodedUpdatedDeck.add(encodedDict);
+      }
+
+      await prefs.setStringList(listName, encodedUpdatedDeck);
+      return true;
+    }else {
+      // dict already exist -> saving returns false
+      return false;
     }
-
-    await prefs.setStringList(listName, encodedUpdatedDeck);
   }
 
 
-
-  static Future<List<Map<String, dynamic>>> fetchLocalDeck(String listName) async {
+  static Future<List<Map<String, dynamic>>> fetchLocalDeck(
+      String listName) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
     // Retrieve the existing deck from shared preferences
@@ -156,13 +168,13 @@ class LocalStorageService {
     }
   }
 
-  static Future<Map<String, dynamic>> createMapListMapLocalDecks() async{
+  static Future<Map<String, dynamic>> createMapListMapLocalDecks() async {
     Map<String, dynamic> localDecks = {};
     // local
     List<String> allDecks = await LocalStorageService.getDeckNames();
     for (String deck in allDecks) {
       List<Map<String, dynamic>> fetchedLocalDeck =
-      await LocalStorageService.fetchLocalDeck(deck);
+          await LocalStorageService.fetchLocalDeck(deck);
       List<Map<String, dynamic>> cardListOneDeck = [];
       for (Map<String, dynamic> card in fetchedLocalDeck) {
         cardListOneDeck.add({
@@ -176,6 +188,4 @@ class LocalStorageService {
     // example: localDecks {Deckel : [{translation: {Gruppe : grupo}}, {translation: {oktupus: pulpo}}], Haben : [],}
     return localDecks;
   }
-
-
 }
