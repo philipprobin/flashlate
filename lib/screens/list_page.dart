@@ -30,8 +30,27 @@ class _ListPageState extends State<ListPage> {
     });
   }
 
+  Future<void> _deleteDeck() async {
+    if (newDeckName.isNotEmpty) {
+      LocalStorageService.deleteDeck(newDeckName);
+      bool result = await databaseService.deleteDeck(newDeckName);
+      debugPrint("deck deleted: $result");
+
+
+      _fetchData().then((categoryWidgets) {
+        setState(() {
+          newDeckName = '';
+          fetchedCategoryWidgets = categoryWidgets;
+        });
+      });
+    }
+  }
+
   Future<void> _addNewDeck() async {
     if (newDeckName.isNotEmpty) {
+
+      LocalStorageService.setCurrentDeck(newDeckName);
+
       localStorageService.addDeck(newDeckName);
 
       // Clear the input field after adding
@@ -50,27 +69,28 @@ class _ListPageState extends State<ListPage> {
   }
 
   Future<List<CategoryTileWidget>> _fetchData() async {
+    // dowload
 
-    Map<String, dynamic> decks = await databaseService.fetchAllCards();
-    debugPrint("decks $decks");
+    /*Map<String, dynamic> userDeck = await databaseService.fetchUserDoc();
+    debugPrint("decks mf $decks");*/
+
+    //local
+    Map<String, dynamic> userDeck = await LocalStorageService.createMapListMapLocalDecks();
 
     List<CategoryTileWidget> categoryWidgets = [];
 
-    for (var categoryEntry in decks.entries) {
-      var categoryName = categoryEntry.key;
-      var wordMap = categoryEntry.value;
-
+    userDeck.forEach((deckName, cards) {
       List<WordTileWidget> wordWidgets = [];
-      for (var wordEntry in wordMap.entries) {
-        var word = wordEntry.key;
-        var translation = wordEntry.value;
-        wordWidgets.add(WordTileWidget(word, translation));
+      for (Map<String, dynamic> card in cards) {
+        //String time = card['time'];
+        Map<String, dynamic> translation = card['translation'];
+        wordWidgets.add(WordTileWidget(
+            translation.keys.first, translation.values.first.toString()));
       }
-
-      var categoryWidget = CategoryTileWidget(categoryName, wordWidgets);
+      var categoryWidget =
+          CategoryTileWidget(deckName, wordWidgets.reversed.toList());
       categoryWidgets.add(categoryWidget);
-    }
-
+    });
     return categoryWidgets;
   }
 
@@ -83,8 +103,8 @@ class _ListPageState extends State<ListPage> {
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 16.0, vertical: 12.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
               child: Row(
                 children: [
                   Expanded(
@@ -94,23 +114,22 @@ class _ListPageState extends State<ListPage> {
                         color: Colors.grey[200],
                       ),
                       child: Padding(
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 8.0),
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
                         child: TextField(
                           onChanged: (value) {
                             setState(() {
-                              newDeckName = value;
+                              newDeckName = value.trim();
                             });
                           },
                           decoration: const InputDecoration(
-                            hintText: 'Enter a new deck name',
+                            hintText: 'Enter a deck name',
                             border: InputBorder.none,
                           ),
                         ),
                       ),
                     ),
                   ),
-                  SizedBox(width: 10),
+                  const SizedBox(width: 10),
                   ElevatedButton(
                     onPressed: _addNewDeck,
                     style: ElevatedButton.styleFrom(
@@ -119,7 +138,21 @@ class _ListPageState extends State<ListPage> {
                         borderRadius: BorderRadius.circular(8.0),
                       ),
                     ),
-                    child: const Text('Add Deck',
+                    child: const Text('+',
+                        style: TextStyle(color: Colors.white)),
+                  ),
+                  Container(
+                    width: 12,
+                  ),
+                  ElevatedButton(
+                    onPressed: _deleteDeck,
+                    style: ElevatedButton.styleFrom(
+                      primary: Theme.of(context).primaryColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                    ),
+                    child: const Text('-',
                         style: TextStyle(color: Colors.white)),
                   ),
                 ],
@@ -128,7 +161,7 @@ class _ListPageState extends State<ListPage> {
           ),
           Expanded(
             child: ListView(
-              children: fetchedCategoryWidgets,
+              children: fetchedCategoryWidgets.reversed.toList(),
             ),
           ),
         ],

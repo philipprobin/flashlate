@@ -11,7 +11,7 @@ class PracticePage extends StatefulWidget {
 }
 
 class _PracticePageState extends State<PracticePage> {
-  List<Map<String, String>> storedData = [];
+  List<Map<String, String>> userDeck = [];
   final databaseService = DatabaseService();
   PageController pageController = PageController(initialPage: 0);
   int currentIndex = 0;
@@ -24,10 +24,30 @@ class _PracticePageState extends State<PracticePage> {
   }
 
   Future<void> _fetchStoredData() async {
-    storedData = await databaseService.getCardsForCurrentDeck();
-    setState(() {
+    // download
+    // Map<String,dynamic> downloadDecks = await databaseService.fetchUserDoc();
+    // local
+    Map<String,dynamic> localDecks = await LocalStorageService.createMapListMapLocalDecks();
 
-      debugPrint("list elements ${storedData.length}");
+    String currentDeck = await LocalStorageService.getCurrentDeck();
+
+    List<Map<String, String>> cardsList = [];
+
+    localDecks.forEach((deckName, cards) {
+      debugPrint("get my current deck $deckName $currentDeck ${deckName == currentDeck}");
+      if (deckName == currentDeck) {
+        for (Map<String, dynamic> card in cards) {
+          Map<String, dynamic> translation = card['translation'];
+
+          cardsList.add(
+              {translation.keys.first: translation.values.first.toString()});
+        }
+      }
+    });
+
+    setState(() {
+      userDeck = cardsList;
+      debugPrint("list elements ${userDeck.length}");
       currentIndex = 0;
       showFrontSide = true;
     });
@@ -42,7 +62,7 @@ class _PracticePageState extends State<PracticePage> {
   // Update _swipeCard method as follows
   void _swipeCard(int delta) {
     int newIndex = currentIndex + delta;
-    if (newIndex >= 0 && newIndex < storedData.length) {
+    if (newIndex >= 0 && newIndex < userDeck.length) {
       setState(() {
         currentIndex = newIndex;
         pageController.animateToPage(
@@ -78,7 +98,7 @@ class _PracticePageState extends State<PracticePage> {
           },
           child: PageView.builder(
             controller: pageController,
-            itemCount: storedData.length,
+            itemCount: userDeck.length,
             itemBuilder: (context, index) {
               return AnimatedSwitcher(
                 duration: Duration(milliseconds: 300),
@@ -94,8 +114,8 @@ class _PracticePageState extends State<PracticePage> {
                     alignment: Alignment.center,
                     child: Text(
                       showFrontSide
-                          ? storedData[index].keys.first
-                          : storedData[index].values.first,
+                          ? userDeck[index].keys.first
+                          : userDeck[index].values.first,
                       style: TextStyle(fontSize: 20,),
                     ),
                   ),

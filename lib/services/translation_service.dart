@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flashlate/api_key.dart';
@@ -15,6 +16,7 @@ class TranslationService {
     });
 
     final data = json.decode(response.body);
+    debugPrint("other translations ${data}");
     return data['data']['translations'][0]['translatedText'];
   }
 

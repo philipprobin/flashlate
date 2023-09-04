@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flashlate/screens/list_page.dart';
 import 'package:flashlate/screens/main_page..dart';
 import 'package:flashlate/screens/practice_page.dart';
+import 'package:flashlate/screens/test_page.dart';
 import 'package:flashlate/services/authentification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -39,7 +40,9 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       theme: ThemeData(
         primaryColor: customGray[700],
-        secondaryHeaderColor: Colors.grey.shade200,// Set the accent color
+        secondaryHeaderColor: Colors.grey.shade200,
+        highlightColor: const Color(0xFF5f97f6),
+        // Set the accent color
         scaffoldBackgroundColor: Colors.grey.shade200, // Set the scaffold background color
         appBarTheme: AppBarTheme(
           color: Colors.grey.shade300, // Set the app bar color
@@ -56,6 +59,7 @@ class MyApp extends StatelessWidget {
         '/practice': (context) => PracticePage(),
         '/list': (context) => ListPage(),
         '/auth': (context) => const AuthenticationService(),
+        '/test': (context) => TestPage(),
       },
     );
   }

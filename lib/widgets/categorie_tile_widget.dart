@@ -33,8 +33,8 @@ class _CategoryTileState extends State<CategoryTileWidget> {
         child: Text(
           widget.categoryName,
           style: _isSelectedDeck
-              ? TextStyle(fontWeight: FontWeight.bold) // Bold if selected deck
-              : null,
+              ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20) // Bold if selected deck
+              : const TextStyle(fontSize: 20),
         ),
       ),
       children: widget.words,

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ffi';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -7,7 +8,6 @@ import 'package:flashlate/services/database_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flashlate/services/translation_service.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/local_storage_service.dart';
 import '../widgets/custom_app_bar_widget.dart';
@@ -31,32 +31,39 @@ class _MainPageState extends State<MainPage> {
   bool editingMode = false;
   LocalStorageService localStorageService = LocalStorageService();
 
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email']);
-
   List<Map<String, String>> storedData = [];
+  List<String> dropdownItems = [];
+  String currentDropdownValue = "";
 
-  void _addToStorage(String originalText, String translatedText) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
+  @override
+  void initState() {
+    super.initState();
 
-    // Load existing data
-    String? jsonData = prefs.getString('data');
-    Map<String, String> dataMap = {}; // Create an empty map
+    loadDropdownItemsFromPreferences();
+  }
 
-    if (jsonData != null) {
-      dataMap = Map<String, String>.from(json.decode(jsonData));
+  Future<void> loadDropdownItemsFromPreferences() async {
+    // Fetch the items from local preferences (shared preferences)
+    List<String> fetchedItems = await LocalStorageService.getDeckNames();
+
+    String currentDeck = await LocalStorageService.getCurrentDeck();
+    debugPrint("currentDeck iiisss : $currentDeck");
+
+    if (fetchedItems.isEmpty) {
+      // TODO: pull from db?
     }
 
-    // Add new translation
-    dataMap[originalText] = translatedText;
+    if (!fetchedItems.contains(currentDeck)) {
+      debugPrint("not contains :(");
+      await localStorageService.addDeck(currentDeck);
+      fetchedItems = await LocalStorageService.getDeckNames();
+    }
 
-    debugPrint("saved: $originalText : $translatedText");
-
-    // Encode the updated map to JSON
-    String updatedJsonData = json.encode(dataMap);
-
-    // Save updated data
-    prefs.setString('data', updatedJsonData);
+    setState(() {
+      // Update the state with the fetched items
+      currentDropdownValue = currentDeck;
+      dropdownItems = fetchedItems;
+    });
   }
 
   Future<void> translateDeEsText() async {
@@ -83,7 +90,7 @@ class _MainPageState extends State<MainPage> {
   Widget build(BuildContext context) {
     final OnSelected selected = ((index, instance) {
       debugPrint('Select $index, toggle ${instance.labels[index]}');
-      editingMode = (index == 0);
+      editingMode = (index == 1);
     });
 
     return KeyboardVisibilityBuilder(builder: (context, visible) {
@@ -104,8 +111,8 @@ class _MainPageState extends State<MainPage> {
                                 width: 60,
                                 height: 40,
                                 icons: const [
-                                  Icon(Icons.edit),
                                   Icon(Icons.compare_arrows),
+                                  Icon(Icons.edit),
                                 ],
                                 labels: const ['', ''],
                                 onSelected: selected,
@@ -114,51 +121,31 @@ class _MainPageState extends State<MainPage> {
                               ),
                               ElevatedButton.icon(
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Theme.of(context)
-                                      .primaryColor, // Set the background color here
+                                  backgroundColor: translatedText.isNotEmpty ? Theme.of(context).highlightColor : Colors.grey, // Use primaryColor when text is not empty, otherwise gray
                                 ),
-                                onPressed: () async {
+                                onPressed: translatedText.isNotEmpty // Enable the button only if translatedText is not empty
+                                    ? () async {
                                   final databaseService = DatabaseService();
-                                  String deckName = await LocalStorageService.getCurrentDeck()?? await localStorageService.getLastAddedDeck()?? "Deck";
-                                  //String deckName = await localStorageService.getLastAddedDeck()?? "Deck";
-                                  bool response = await databaseService.addCard(
-                                      deckName,
-                                      originalText,
-                                      translatedText);
-                                  if (!response) {
-                                    debugPrint('upload failed');
-                                  } else {
+                                  // add deckName to Decklist
+                                  String deckName = await LocalStorageService.getCurrentDeck();
+
+                                  // Rest of your code here
+
+                                  setState(() {
+                                    uploadSuccess = true;
+                                  });
+
+                                  Future.delayed(const Duration(seconds: 1), () {
                                     setState(() {
-                                      uploadSuccess = true;
+                                      uploadSuccess = false;
                                     });
-                                    Future.delayed(const Duration(seconds: 1),
-                                        () {
-                                      setState(() {
-                                        uploadSuccess = false;
-                                      });
-                                    });
-                                  }
-                                  //_addToStorage(originalText, translatedText);
-                                  //Map<String, dynamic> myDict = {originalText: translatedText, };
-
-                                  /*String deckName = "deck1";
-                                final deckManager1 = DeckManagerService(deckName);
-                                await deckManager1.addToDeck(deckName, {originalText: translatedText});
-                                */
-                                  //await localStorageService.addToDeck('deck1', myDict);
-                                  // Your onPressed function here
-                                },
-                                icon:
-                                    const Icon(Icons.add, color: Colors.white),
+                                  });
+                                }
+                                    : null, // Disable the button when translatedText is empty
+                                icon: translatedText.isNotEmpty ? const Icon(Icons.add, color: Colors.white) : const Icon(Icons.add, color: Colors.grey),
+                                label: const Text("add"),
                                 // Set the icon color
-
-                                label: const Text(
-                                  'hinzufügen',
-                                  style: TextStyle(
-                                    color: Colors.white, // Set the text color
-                                  ),
-                                ),
-                              )
+                              ),
                             ],
                           ),
                           const SizedBox(height: 8),
@@ -167,13 +154,65 @@ class _MainPageState extends State<MainPage> {
                     : Container(),
 
                 // Second Box
+                (!visible)
+                    ? Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).primaryColor,
+                            borderRadius: BorderRadius.circular(
+                                8), // Make the container round
+                          ),
 
+                          padding: EdgeInsets.symmetric(horizontal: 16),
+                          // Adjust horizontal padding as needed
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              borderRadius:
+                                  const BorderRadius.all(Radius.circular(8)),
+                              dropdownColor: Theme.of(context).primaryColor,
+                              // isExpanded: true,
+                              value: currentDropdownValue.isEmpty
+                                  ? (dropdownItems.isNotEmpty
+                                      ? dropdownItems[0]
+                                      : null)
+                                  : currentDropdownValue,
+
+                              onChanged: (String? newValue) {
+                                setState(() {
+                                  currentDropdownValue = newValue!;
+                                  LocalStorageService.setCurrentDeck(newValue);
+                                });
+                              },
+                              items:
+                                  dropdownItems.map<DropdownMenuItem<String>>(
+                                (String value) {
+                                  return DropdownMenuItem<String>(
+                                    value: value,
+                                    child: Center(
+                                      // Center the text within each item
+                                      child: Text(
+                                        value,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ).toList(),
+                            ),
+                          ),
+                        ),
+                      )
+                    : Container(),
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 500),
-                  height: MediaQuery.of(context).size.width * 0.5,
+                  height: MediaQuery.of(context).size.width * 0.4,
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(8),
                     boxShadow: [
                       BoxShadow(
                         color: uploadSuccess
@@ -215,7 +254,7 @@ class _MainPageState extends State<MainPage> {
                               textAlignVertical: TextAlignVertical.center,
                               controller: topTextEditingController,
                               decoration: const InputDecoration.collapsed(
-                                hintText: 'Text eingeben',
+                                hintText: 'Enter text',
                                 border: InputBorder.none,
                               ),
                               style: const TextStyle(fontSize: 24),
@@ -251,10 +290,10 @@ class _MainPageState extends State<MainPage> {
 
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 500),
-                  height: MediaQuery.of(context).size.width * 0.5,
+                  height: MediaQuery.of(context).size.width * 0.4,
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(8),
                     boxShadow: [
                       BoxShadow(
                         color: uploadSuccess
@@ -272,7 +311,7 @@ class _MainPageState extends State<MainPage> {
                       alignment: Alignment.bottomCenter,
                       children: [
                         const Text(
-                          "Spanisch",
+                          "Español",
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -296,7 +335,7 @@ class _MainPageState extends State<MainPage> {
                               textAlignVertical: TextAlignVertical.center,
                               controller: bottomTextEditingController,
                               decoration: const InputDecoration.collapsed(
-                                hintText: 'Text eingeben',
+                                hintText: 'Enter text',
                                 border: InputBorder.none,
                               ),
                               style: const TextStyle(fontSize: 24),
