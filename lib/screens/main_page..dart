@@ -44,9 +44,11 @@ class _MainPageState extends State<MainPage> {
 
   Future<void> loadDropdownItemsFromPreferences() async {
     // Fetch the items from local preferences (shared preferences)
-    List<String> fetchedItems = await LocalStorageService.getDeckNames();
 
+    // creates new deck "Deck" if list empty
     String currentDeck = await LocalStorageService.getCurrentDeck();
+
+    List<String> fetchedItems = await LocalStorageService.getDeckNames();
     debugPrint("currentDeck iiisss : $currentDeck");
 
     if (fetchedItems.isEmpty) {
@@ -127,14 +129,18 @@ class _MainPageState extends State<MainPage> {
                                     ? () async {
                                   final databaseService = DatabaseService();
                                   // add deckName to Decklist
-                                  String deckName = await LocalStorageService.getCurrentDeck();
-
-                                  // Rest of your code here
-
-                                  setState(() {
-                                    uploadSuccess = true;
-                                  });
-
+                                  String deckName = await LocalStorageService
+                                      .getCurrentDeck();
+                                  // local
+                                  // add card to Cardlist
+                                  LocalStorageService.addCardToLocalDeck(
+                                      deckName, {originalText: translatedText});
+                                  // upload
+                                  bool response = await databaseService.addCard(
+                                      deckName, originalText, translatedText);
+                                  if (!response) {
+                                    debugPrint('upload failed');
+                                  }
                                   Future.delayed(const Duration(seconds: 1), () {
                                     setState(() {
                                       uploadSuccess = false;

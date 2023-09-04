@@ -1,10 +1,8 @@
 import 'package:double_back_to_close_app/double_back_to_close_app.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flashlate/screens/list_page.dart';
 import 'package:flashlate/screens/main_page..dart';
 import 'package:flashlate/screens/practice_page.dart';
-import 'package:flashlate/screens/test_page.dart';
 import 'package:flashlate/services/authentification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -59,7 +57,6 @@ class MyApp extends StatelessWidget {
         '/practice': (context) => PracticePage(),
         '/list': (context) => ListPage(),
         '/auth': (context) => const AuthenticationService(),
-        '/test': (context) => TestPage(),
       },
     );
   }

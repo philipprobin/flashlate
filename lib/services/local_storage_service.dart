@@ -15,7 +15,7 @@ class LocalStorageService {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     if (prefs.getString(_currentDeckKey) == null) {
       LocalStorageService localStorageService = LocalStorageService();
-      return await localStorageService.addDeck("Deck (1)");
+      return await localStorageService.addDeck("Deck");
     } else {
       return prefs.getString(_currentDeckKey)!;
     }
