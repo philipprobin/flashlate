@@ -4,6 +4,7 @@ import 'dart:convert';
 
 import '../services/database_service.dart';
 import '../services/local_storage_service.dart';
+import '../widgets/custom_app_bar_widget.dart';
 
 class PracticePage extends StatefulWidget {
   @override
@@ -80,12 +81,7 @@ class _PracticePageState extends State<PracticePage> {
     return Scaffold(
 
       backgroundColor: Theme.of(context).primaryColor,
-      appBar: AppBar(
-
-        iconTheme: IconThemeData(color: Theme.of(context).secondaryHeaderColor, ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
+      appBar: CustomAppBarWidget(),
       body: Center(
         child: GestureDetector(
           onTap: _handleCardTap,
