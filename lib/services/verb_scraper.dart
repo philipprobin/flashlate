@@ -11,6 +11,25 @@ Future<Map> getDict(String verb) async {
     if (response.statusCode == 200) {
       final document = html.parse(response.body);
 
+      // Find the input element by its ID
+      final inputElement = document.querySelector('#q');
+
+      // Check if the element exists
+      if (inputElement != null) {
+        // Extract the "value" attribute from the input element
+        final valueAttribute = inputElement.attributes['value'];
+        inputElement.attributes['value'] = "digo";
+
+        if (valueAttribute != null) {
+          // Print the extracted value
+          print('Value: $valueAttribute');
+        } else {
+          print('Value attribute not found.');
+        }
+      } else {
+        print('Element with ID "q" not found.');
+      }
+
       final elements = document.querySelectorAll('div.ft-single-table');
       print(elements.length);
 

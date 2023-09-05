@@ -75,7 +75,7 @@ class _ListPageState extends State<ListPage> {
     debugPrint("decks mf $decks");*/
 
     //local
-    Map<String, dynamic> userDeck = await LocalStorageService.createMapListMapLocalDecks();
+    Map<String, dynamic> userDeck = await LocalStorageService.createMapListMapLocalDecks("");
 
     List<CategoryTileWidget> categoryWidgets = [];
 
@@ -85,7 +85,7 @@ class _ListPageState extends State<ListPage> {
         //String time = card['time'];
         Map<String, dynamic> translation = card['translation'];
         wordWidgets.add(WordTileWidget(
-            translation.keys.first, translation.values.first.toString()));
+            word: translation.keys.first, translation: translation.values.first.toString(), onDelete: () {  },));
       }
       var categoryWidget =
           CategoryTileWidget(deckName, wordWidgets.reversed.toList());

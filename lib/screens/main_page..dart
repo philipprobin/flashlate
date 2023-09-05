@@ -20,6 +20,7 @@ class _MainPageState extends State<MainPage> {
   String originalText = '';
   String translatedText = '';
   bool uploadSuccess = false;
+  bool originalIsTop = true;
 
   TextEditingController bottomTextEditingController = TextEditingController();
   TextEditingController topTextEditingController = TextEditingController();
@@ -47,7 +48,6 @@ class _MainPageState extends State<MainPage> {
     debugPrint("currentDeck iiisss : $currentDeck");
 
     if (fetchedItems.isEmpty) {
-      // TODO: pull from db?
       // TODO: add App Icon
       // TODO: add more langs
     }
@@ -70,6 +70,7 @@ class _MainPageState extends State<MainPage> {
         await translationService.translateDeEsText(originalText);
     setState(() {
       translatedText = translation;
+      originalIsTop = true;
       bottomTextEditingController.text = translatedText;
       debugPrint('Translated Text: $translatedText');
     });
@@ -80,6 +81,7 @@ class _MainPageState extends State<MainPage> {
         await translationService.translateEsDeText(originalText);
     setState(() {
       translatedText = translation;
+      originalIsTop = false;
       topTextEditingController.text = translatedText;
       debugPrint('Translated Text: $translatedText');
     });
@@ -136,15 +138,25 @@ class _MainPageState extends State<MainPage> {
                                                 .getCurrentDeck();
                                         // local
                                         // add card to Cardlist
+                                        String source = "";
+                                        String target = "";
+                                        if (originalIsTop){
+                                          source = originalText.trim();
+                                          target = translatedText.trim();
+                                        }
+                                        else{
+                                          source = translatedText.trim();
+                                          target = originalText.trim();
+                                        }
                                         LocalStorageService.addCardToLocalDeck(
                                             deckName,
-                                            {originalText.trim(): translatedText.trim()});
+                                            {source: target});
                                         // upload
                                         bool response =
                                             await databaseService.addCard(
                                                 deckName,
-                                                originalText.trim(),
-                                                translatedText.trim());
+                                                source,
+                                                target);
                                         if (!response) {
                                           debugPrint('upload failed');
                                         } else {
@@ -395,6 +407,7 @@ class _MainPageState extends State<MainPage> {
                     ),
                   ),
                 ),
+
               ],
             ),
           ),

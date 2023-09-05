@@ -36,6 +36,7 @@ dependencies:
   html: ^0.15.0
   fk_toggle: ^0.1.4
   shared_preferences: ^2.2.0
+  puppeteer: ^3.0.0
 
   firebase_core: ^2.15.1
   firebase_auth: ^4.8.0
