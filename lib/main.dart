@@ -1,5 +1,6 @@
 import 'package:double_back_to_close_app/double_back_to_close_app.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flashlate/screens/conjugation_page.dart';
 import 'package:flashlate/screens/list_page.dart';
 import 'package:flashlate/screens/main_page..dart';
 import 'package:flashlate/screens/practice_page.dart';
@@ -57,6 +58,7 @@ class MyApp extends StatelessWidget {
         '/practice': (context) => PracticePage(),
         '/list': (context) => ListPage(),
         '/auth': (context) => const AuthenticationService(),
+        '/conjugation': (context) => ConjugationPage(),
       },
     );
   }

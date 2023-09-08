@@ -1,5 +1,6 @@
-
 import 'package:fk_toggle/fk_toggle.dart';
+import 'package:flashlate/screens/conjugation_page.dart';
+import 'package:flashlate/services/cloud_function_service.dart';
 import 'package:flashlate/services/database_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flashlate/services/translation_service.dart';
@@ -30,6 +31,8 @@ class _MainPageState extends State<MainPage> {
   List<Map<String, String>> storedData = [];
   List<String> dropdownItems = [];
   String currentDropdownValue = "";
+
+  Map<String, dynamic>? conjugationResult;
 
   @override
   void initState() {
@@ -68,6 +71,7 @@ class _MainPageState extends State<MainPage> {
   Future<void> translateDeEsText() async {
     final translation =
         await translationService.translateDeEsText(originalText);
+    showConjugations(translation);
     setState(() {
       translatedText = translation;
       originalIsTop = true;
@@ -76,7 +80,24 @@ class _MainPageState extends State<MainPage> {
     });
   }
 
+  Future<bool> showConjugations(String translatedText) async {
+    debugPrint("showConjugations triggerd");
+    Map<String, dynamic>? conjugations =
+        await CloudFunctionService.fetchVerConjugations(translatedText);
+    if (conjugations != null) {
+      debugPrint(conjugations.toString());
+      setState(() {
+        conjugationResult = conjugations;
+      });
+
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   Future<void> translateEsDeText() async {
+    showConjugations(originalText);
     final translation =
         await translationService.translateEsDeText(originalText);
     setState(() {
@@ -120,6 +141,33 @@ class _MainPageState extends State<MainPage> {
                                 enabledElementColor:
                                     Theme.of(context).primaryColor,
                               ),
+                              (conjugationResult != null)
+                                  ? ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Theme.of(context)
+                                          .primaryColor, // Use the primary color
+                                    ),
+                                    onPressed: () {
+                                      if (conjugationResult != null) {
+                                        debugPrint("conjugationResult != null ${conjugationResult!["verb"]}");
+
+                                      }
+                                      else {
+                                        debugPrint("conjugationResult == null");
+                                      }
+
+                                      Navigator.pushNamed(
+                                        context,
+                                        ConjugationPage.routeName,
+                                        arguments: ConjugationArguments(
+                                          conjugationResult,
+                                        ),
+                                      );
+                                      // Add your button's onPressed functionality here
+                                    },
+                                    child: Text(conjugationResult!["verb"]),
+                                  )
+                                  : Container(),
                               ElevatedButton.icon(
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: translatedText.isNotEmpty
@@ -140,23 +188,30 @@ class _MainPageState extends State<MainPage> {
                                         // add card to Cardlist
                                         String source = "";
                                         String target = "";
-                                        if (originalIsTop){
+                                        if (originalIsTop) {
                                           source = originalText.trim();
                                           target = translatedText.trim();
-                                        }
-                                        else{
+                                        } else {
                                           source = translatedText.trim();
                                           target = originalText.trim();
                                         }
                                         LocalStorageService.addCardToLocalDeck(
-                                            deckName,
-                                            {source: target});
+                                            deckName, {source: target});
+                                        bool practiceDeckIsEmpty =
+                                            await LocalStorageService
+                                                .checkDeckIsEmpty(
+                                                    "pRaCtIcEmOde-$deckName");
+                                        // only add if not empty -> if empty gets copied later
+                                        if (!practiceDeckIsEmpty) {
+                                          LocalStorageService
+                                              .addCardToLocalDeck(
+                                                  "pRaCtIcEmOde-$deckName",
+                                                  {source: target});
+                                        }
+
                                         // upload
-                                        bool response =
-                                            await databaseService.addCard(
-                                                deckName,
-                                                source,
-                                                target);
+                                        bool response = await databaseService
+                                            .addCard(deckName, source, target);
                                         if (!response) {
                                           debugPrint('upload failed');
                                         } else {
@@ -407,7 +462,6 @@ class _MainPageState extends State<MainPage> {
                     ),
                   ),
                 ),
-
               ],
             ),
           ),
@@ -415,4 +469,13 @@ class _MainPageState extends State<MainPage> {
       );
     });
   }
+}
+
+// You can pass any object to the arguments parameter.
+// In this example, create a class that contains both
+// a customizable title and message.
+class ConjugationArguments {
+  final Map<String, dynamic>? verbConjugations;
+
+  ConjugationArguments(this.verbConjugations);
 }

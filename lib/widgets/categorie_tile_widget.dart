@@ -65,8 +65,11 @@ class _CategoryTileState extends State<CategoryTileWidget> {
     });
     bool localResult = await LocalStorageService.deleteCardFromLocalDeck(widget.categoryName, {wordWidget.word: wordWidget.translation});
     debugPrint("local removal successfull $localResult");
+    bool localPracticeResult = await LocalStorageService.deleteCardFromLocalDeck("pRaCtIcEmOde-${widget.categoryName}", {wordWidget.word: wordWidget.translation});
+    debugPrint("local Practice removal successfull $localPracticeResult");
     bool dbResult = await DatabaseService.deleteCard(widget.categoryName, {wordWidget.word: wordWidget.translation});
     debugPrint("database removal successfull $dbResult");
+
     // You can also add logic here to update your data source or perform any other necessary actions
   }
 }
