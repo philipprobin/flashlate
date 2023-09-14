@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-
 import '../services/database_service.dart';
 import '../services/local_storage_service.dart';
-import '../widgets/custom_app_bar_widget.dart';
 
 class PracticePage extends StatefulWidget {
   @override
@@ -148,7 +145,6 @@ class _PracticePageState extends State<PracticePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).primaryColor,
-      appBar: CustomAppBarWidget(),
       body: Column(
         children: [
           Expanded(

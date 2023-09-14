@@ -1,4 +1,4 @@
-import 'package:flashlate/widgets/custom_app_bar_widget.dart';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -97,7 +97,6 @@ class _ListPageState extends State<ListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBarWidget(),
       body: Column(
         children: [
           Padding(

@@ -38,11 +38,12 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: ThemeData(
-        primaryColor: customGray[700],
-        secondaryHeaderColor: Colors.grey.shade200,
-        highlightColor: const Color(0xFF5f97f6),
+        fontFamily: "AvertaStd",
+        primaryColor: const Color(0xFF00b894),
+        secondaryHeaderColor: const Color(0xFFececed), //ButtonColor
+        highlightColor: const Color(0xFF303434),
         // Set the accent color
-        scaffoldBackgroundColor: Colors.grey.shade200, // Set the scaffold background color
+        scaffoldBackgroundColor: const Color(0xFFEAEAEA),
         appBarTheme: AppBarTheme(
           color: Colors.grey.shade300, // Set the app bar color
         ), colorScheme: ColorScheme.fromSwatch().copyWith(secondary: Colors.grey),

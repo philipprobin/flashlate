@@ -1,4 +1,3 @@
-import 'package:fk_toggle/fk_toggle.dart';
 import 'package:flashlate/screens/conjugation_page.dart';
 import 'package:flashlate/services/cloud_function_service.dart';
 import 'package:flashlate/services/database_service.dart';
@@ -6,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flashlate/services/translation_service.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import '../services/local_storage_service.dart';
-import '../widgets/custom_app_bar_widget.dart';
+import '../widgets/top_bar_widget.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({Key? key}) : super(key: key);
@@ -22,6 +21,10 @@ class _MainPageState extends State<MainPage> {
   String translatedText = '';
   bool uploadSuccess = false;
   bool originalIsTop = true;
+  static const double cornerRadius = 20.0;
+  static const secondBoxColor = Color(0xFFf8f8f8);
+  static const addBoxColor = Color(0xFF2f3638);
+  var translatedTextNotEmpty = false;
 
   TextEditingController bottomTextEditingController = TextEditingController();
   TextEditingController topTextEditingController = TextEditingController();
@@ -76,8 +79,23 @@ class _MainPageState extends State<MainPage> {
       translatedText = translation;
       originalIsTop = true;
       bottomTextEditingController.text = translatedText;
+      translatedTextNotEmpty = translatedText.isNotEmpty ? true : false;
+
       debugPrint('Translated Text: $translatedText');
     });
+  }
+
+  String extractLetters(String input) {
+    // Define a regular expression to match letters
+    final RegExp regex = RegExp(r'[a-zA-Z]+');
+
+    // Use the RegExp pattern to find all matches in the input string
+    Iterable<Match> matches = regex.allMatches(input);
+
+    // Join the matched letters to form a new string
+    String result = matches.map((match) => match.group(0)!).join('');
+
+    return result;
   }
 
   Future<bool> showConjugations(String translatedText) async {
@@ -102,6 +120,7 @@ class _MainPageState extends State<MainPage> {
         await translationService.translateEsDeText(originalText);
     setState(() {
       translatedText = translation;
+      translatedTextNotEmpty = translatedText.isNotEmpty ? true : false;
       originalIsTop = false;
       topTextEditingController.text = translatedText;
       debugPrint('Translated Text: $translatedText');
@@ -110,357 +129,436 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
-    final OnSelected selected = ((index, instance) {
-      debugPrint('Select $index, toggle ${instance.labels[index]}');
-      editingMode = (index == 1);
-    });
-
     return KeyboardVisibilityBuilder(builder: (context, visible) {
       return Scaffold(
-        appBar: CustomAppBarWidget(),
         body: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
-                (visible)
-                    ? Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              FkToggle(
-                                width: 60,
-                                height: 40,
-                                icons: const [
-                                  Icon(Icons.compare_arrows),
-                                  Icon(Icons.edit),
-                                ],
-                                labels: const ['', ''],
-                                onSelected: selected,
-                                enabledElementColor:
-                                    Theme.of(context).primaryColor,
-                              ),
-                              (conjugationResult != null)
-                                  ? ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Theme.of(context)
-                                          .primaryColor, // Use the primary color
-                                    ),
-                                    onPressed: () {
-                                      if (conjugationResult != null) {
-                                        debugPrint("conjugationResult != null ${conjugationResult!["verb"]}");
-
-                                      }
-                                      else {
-                                        debugPrint("conjugationResult == null");
-                                      }
-
-                                      Navigator.pushNamed(
-                                        context,
-                                        ConjugationPage.routeName,
-                                        arguments: ConjugationArguments(
-                                          conjugationResult,
-                                        ),
-                                      );
-                                      // Add your button's onPressed functionality here
-                                    },
-                                    child: Text(conjugationResult!["verb"]),
-                                  )
-                                  : Container(),
-                              ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: translatedText.isNotEmpty
-                                      ? Theme.of(context).highlightColor
-                                      : Colors
-                                          .grey, // Use primaryColor when text is not empty, otherwise gray
-                                ),
-                                onPressed: translatedText
-                                        .isNotEmpty // Enable the button only if translatedText is not empty
-                                    ? () async {
-                                        final databaseService =
-                                            DatabaseService();
-                                        // add deckName to Decklist
-                                        String deckName =
-                                            await LocalStorageService
-                                                .getCurrentDeck();
-                                        // local
-                                        // add card to Cardlist
-                                        String source = "";
-                                        String target = "";
-                                        if (originalIsTop) {
-                                          source = originalText.trim();
-                                          target = translatedText.trim();
-                                        } else {
-                                          source = translatedText.trim();
-                                          target = originalText.trim();
-                                        }
-                                        LocalStorageService.addCardToLocalDeck(
-                                            deckName, {source: target});
-                                        bool practiceDeckIsEmpty =
-                                            await LocalStorageService
-                                                .checkDeckIsEmpty(
-                                                    "pRaCtIcEmOde-$deckName");
-                                        // only add if not empty -> if empty gets copied later
-                                        if (!practiceDeckIsEmpty) {
-                                          LocalStorageService
-                                              .addCardToLocalDeck(
-                                                  "pRaCtIcEmOde-$deckName",
-                                                  {source: target});
-                                        }
-
-                                        // upload
-                                        bool response = await databaseService
-                                            .addCard(deckName, source, target);
-                                        if (!response) {
-                                          debugPrint('upload failed');
-                                        } else {
-                                          setState(() {
-                                            uploadSuccess = true;
-                                          });
-                                          Future.delayed(
-                                              const Duration(seconds: 1), () {
-                                            setState(() {
-                                              uploadSuccess = false;
-                                            });
-                                          });
-                                        }
-                                      }
-                                    : null,
-                                // Disable the button when translatedText is empty
-                                icon: translatedText.isNotEmpty
-                                    ? const Icon(Icons.add, color: Colors.white)
-                                    : const Icon(Icons.add, color: Colors.grey),
-                                label: const Text("add"),
-                                // Set the icon color
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                        ],
-                      )
-                    : Container(),
-
-                // Second Box
-                (!visible)
-                    ? Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).primaryColor,
-                            borderRadius: BorderRadius.circular(
-                                8), // Make the container round
-                          ),
-
-                          padding: EdgeInsets.symmetric(horizontal: 16),
-                          // Adjust horizontal padding as needed
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<String>(
-                              borderRadius:
-                                  const BorderRadius.all(Radius.circular(8)),
-                              dropdownColor: Theme.of(context).primaryColor,
-                              // isExpanded: true,
-                              value: currentDropdownValue.isEmpty
-                                  ? (dropdownItems.isNotEmpty
-                                      ? dropdownItems[0]
-                                      : null)
-                                  : currentDropdownValue,
-
-                              onChanged: (String? newValue) {
-                                setState(() {
-                                  currentDropdownValue = newValue!;
-                                  LocalStorageService.setCurrentDeck(newValue);
-                                });
-                              },
-                              items:
-                                  dropdownItems.map<DropdownMenuItem<String>>(
-                                (String value) {
-                                  return DropdownMenuItem<String>(
-                                    value: value,
-                                    child: Center(
-                                      // Center the text within each item
-                                      child: Text(
-                                        value,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ).toList(),
-                            ),
-                          ),
-                        ),
-                      )
-                    : Container(),
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 500),
-                  height: MediaQuery.of(context).size.width * 0.4,
+                TopBarWidget(
+                  isEditingMode: (value) {
+                    // This function will be called when the boolean value changes.
+                    debugPrint('Boolean value isEditingMode changed: $value');
+                    editingMode = value;
+                    // You can perform any action here based on the boolean value.
+                  },
+                ),
+                // DropDown
+                Container(
+                  height: 24,
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: uploadSuccess
-                            ? Theme.of(context).primaryColor
-                            : Colors.grey.withOpacity(0.5),
-                        spreadRadius: 2,
-                        blurRadius: 5,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
+                    color: Theme.of(context).primaryColor,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(10.0),
+                      // Round only the top-left corner
+                      topRight: Radius.circular(
+                          10.0), // Round only the top-right corner
+                    ), // Make the container round
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Stack(
-                      alignment: Alignment.bottomCenter,
-                      children: [
-                        const Text(
-                          "Deutsch",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  // Adjust horizontal padding as needed
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      icon: const Icon(null // Make the icon transparent
                           ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Center(
-                            child: TextFormField(
-                              maxLines: 4,
-                              onChanged: (value) {
-                                if (!editingMode) {
-                                  setState(() {
-                                    originalText = value;
-                                    translateDeEsText();
-                                  });
-                                }
-                              },
-                              textAlign: TextAlign.center,
-                              // Center horizontally
-                              textAlignVertical: TextAlignVertical.center,
-                              controller: topTextEditingController,
-                              decoration: const InputDecoration.collapsed(
-                                hintText: 'Enter text',
-                                border: InputBorder.none,
-                              ),
-                              style: const TextStyle(fontSize: 24),
+                      borderRadius: const BorderRadius.all(Radius.circular(8)),
+                      dropdownColor: Theme.of(context).primaryColor,
+                      // isExpanded: true,
+                      value: currentDropdownValue.isEmpty
+                          ? (dropdownItems.isNotEmpty ? dropdownItems[0] : null)
+                          : currentDropdownValue,
+
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          currentDropdownValue = newValue!;
+                          LocalStorageService.setCurrentDeck(newValue);
+                        });
+                      },
+                      selectedItemBuilder: (BuildContext context) {
+                        return dropdownItems.map<Widget>((String item) {
+                          return Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                Text(
+                                  item,
+                                  style: const TextStyle(
+                                    fontFamily: 'AvertaStd',
+                                    // Specify the font family name
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                    // Text color of selected item
+                                    fontSize: 18, // Font size of selected item
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
                             ),
-                          ),
-                        ),
-                        Positioned(
-                          top: 10, // Adjust the top position as needed
-                          right: 10, // Adjust the right position as needed
-                          child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                if (editingMode) {
-                                  topTextEditingController.text = '';
-                                } else {
-                                  topTextEditingController.text = '';
-                                  bottomTextEditingController.text = '';
-                                }
-                              });
-                            },
-                            child: Container(
-                              width: 30,
-                              height: 30,
-                              child: const Icon(
-                                Icons.clear,
-                                color: Colors.black45,
+                          );
+                        }).toList();
+                      },
+                      items: dropdownItems.map<DropdownMenuItem<String>>(
+                        (String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Center(
+                              // Center the text within each item
+                              child: Text(
+                                value,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontFamily: 'AvertaStd',
+                                  // Specify the font family name
+                                  fontWeight: FontWeight.w700,
+                                  // Text color of selected item
+                                  fontSize: 18,
+                                ),
+                                textAlign: TextAlign.center,
                               ),
                             ),
-                          ),
-                        ),
-                      ],
+                          );
+                        },
+                      ).toList(),
                     ),
                   ),
                 ),
 
-                const SizedBox(height: 16),
-
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 500),
-                  height: MediaQuery.of(context).size.width * 0.4,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: uploadSuccess
-                            ? Theme.of(context).primaryColor
-                            : Colors.grey.withOpacity(0.5),
-                        spreadRadius: 2,
-                        blurRadius: 5,
-                        offset: Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Stack(
-                      alignment: Alignment.bottomCenter,
-                      children: [
-                        const Text(
-                          "Español",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                // first box
+                Container(
+                  decoration: const BoxDecoration(
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(cornerRadius),
+                      // Adjust the radius as needed
+                      topRight: Radius.circular(
+                          cornerRadius), // Adjust the radius as needed
+                    ),
+                    color: secondBoxColor,
+                  ), // Adjust the radius as needed
+                  child: Container(
+                    height: MediaQuery.of(context).size.width * 0.42,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(cornerRadius),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: Stack(
+                        alignment: Alignment.bottomCenter,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(32.0),
+                            child: Center(
+                              child: TextFormField(
+                                maxLines: 2,
+                                onChanged: (value) {
+                                  if (!editingMode) {
+                                    setState(() {
+                                      originalText = value;
+                                      translateDeEsText();
+                                    });
+                                  }
+                                },
+                                textAlign: TextAlign.center,
+                                // Center horizontally
+                                textAlignVertical: TextAlignVertical.center,
+                                controller: topTextEditingController,
+                                decoration: const InputDecoration.collapsed(
+                                  hintText: 'Enter text',
+                                  hintStyle: TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 24,
+                                      color: Colors.grey),
+                                  border: InputBorder.none,
+                                ),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 24,
+                                    color: Colors.black),
+                              ),
+                            ),
                           ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Center(
-                            child: TextFormField(
-                              maxLines: 4,
-                              onChanged: (value) {
-                                if (!editingMode) {
-                                  setState(() {
-                                    originalText = value;
-                                    translateEsDeText();
-                                  });
-                                }
+                          Positioned(
+                            top: 10, // Adjust the top position as needed
+                            right: 10, // Adjust the right position as needed
+                            child: GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  if (editingMode) {
+                                    topTextEditingController.text = '';
+                                  } else {
+                                    topTextEditingController.text = '';
+                                    bottomTextEditingController.text = '';
+                                  }
+                                  translatedTextNotEmpty = false;
+                                });
                               },
-                              textAlign: TextAlign.center,
-                              // Center horizontally
-                              textAlignVertical: TextAlignVertical.center,
-                              controller: bottomTextEditingController,
-                              decoration: const InputDecoration.collapsed(
-                                hintText: 'Enter text',
-                                border: InputBorder.none,
-                              ),
-                              style: const TextStyle(fontSize: 24),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          top: 10, // Adjust the top position as needed
-                          right: 10, // Adjust the right position as needed
-                          child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                if (editingMode) {
-                                  bottomTextEditingController.text = '';
-                                } else {
-                                  topTextEditingController.text = '';
-                                  bottomTextEditingController.text = '';
-                                }
-                              });
-                            },
-                            child: const SizedBox(
-                              width: 30,
-                              height: 30,
-                              child: Icon(
-                                Icons.clear,
-                                color: Colors.black45,
+                              child: const SizedBox(
+                                width: 30,
+                                height: 30,
+                                child: Icon(
+                                  Icons.clear,
+                                  color: Colors.black45,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
+                          Positioned(
+                            top: 0,
+                            left: 10,
+                            child: TextButton(
+                              style: TextButton.styleFrom(
+                                backgroundColor: Theme.of(context).secondaryHeaderColor,
+                                // Other button styling options here
+                              ),
+                              onPressed: () {
+                                // Your button's onPressed code here
+                              },
+                              child: const Text(
+                                "Deutsch",
+                                style: TextStyle(
+                                  color: Color(0xFFbcbcbd),
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w300,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
+                ),
+
+                //second box
+                Stack(
+                  children: [
+                    // Button container
+                    Positioned(
+                      top: MediaQuery.of(context).size.width * 0.32,
+                      child: ElevatedButton(
+                        onPressed: translatedTextNotEmpty
+                            ? () async {
+                                // Your button's onPressed code here...
+                                final databaseService = DatabaseService();
+                                // add deckName to Decklist
+                                String deckName =
+                                    await LocalStorageService.getCurrentDeck();
+                                // local
+                                // add card to Cardlist
+                                String source = "";
+                                String target = "";
+                                if (originalIsTop) {
+                                  source = originalText.trim();
+                                  target = translatedText.trim();
+                                } else {
+                                  source = translatedText.trim();
+                                  target = originalText.trim();
+                                }
+                                LocalStorageService.addCardToLocalDeck(
+                                    deckName, {source: target});
+                                bool practiceDeckIsEmpty =
+                                    await LocalStorageService.checkDeckIsEmpty(
+                                        "pRaCtIcEmOde-$deckName");
+                                // only add if not empty -> if empty gets copied later
+                                if (!practiceDeckIsEmpty) {
+                                  LocalStorageService.addCardToLocalDeck(
+                                      "pRaCtIcEmOde-$deckName",
+                                      {source: target});
+                                }
+
+                                // upload
+                                bool response = await databaseService.addCard(
+                                    deckName, source, target);
+                                if (!response) {
+                                  debugPrint('upload failed');
+                                } else {
+                                  setState(() {
+                                    uploadSuccess = true;
+                                  });
+                                  Future.delayed(const Duration(seconds: 1),
+                                      () {
+                                    setState(() {
+                                      uploadSuccess = false;
+                                    });
+                                  });
+                                }
+                              }
+                            : null,
+                        // Disable the button if translatedText is empty
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: addBoxColor,
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.only(
+                              bottomRight: Radius.circular(cornerRadius),
+                              bottomLeft: Radius.circular(cornerRadius),
+                            ),
+                          ),
+                        ),
+                        child: Container(
+                          height: MediaQuery.of(context).size.width * 0.20,
+                          width: MediaQuery.of(context).size.width - 64,
+                          decoration: const BoxDecoration(
+                            borderRadius: BorderRadius.only(
+                              bottomLeft: Radius.circular(cornerRadius),
+                              bottomRight: Radius.circular(cornerRadius),
+                            ),
+                          ),
+                          child: const Column(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            // Align content to the bottom
+                            children: [
+                              Align(
+                                alignment: Alignment.center,
+                                child: Padding(
+                                  padding: EdgeInsets.all(12.0),
+                                  child: Text(
+                                    "Add Translation To Deck",
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Second Container
+                    Container(
+                      height: MediaQuery.of(context).size.width * 0.42,
+                      decoration: const BoxDecoration(
+                        color: secondBoxColor,
+                        borderRadius: BorderRadius.only(
+                          bottomLeft: Radius.circular(cornerRadius),
+                          bottomRight: Radius.circular(cornerRadius),
+                        ),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(4.0),
+                        child: Stack(
+                          alignment: Alignment.bottomCenter,
+                          children: [
+                            Positioned(
+                              top: 0,
+                              left: 10,
+                              child: TextButton(
+                                style: TextButton.styleFrom(
+                                  backgroundColor: Theme.of(context).secondaryHeaderColor,
+                                  // Other button styling options here
+                                ),
+                                onPressed: () {
+                                  // Your button's onPressed code here
+                                },
+                                child: const Text(
+                                  "Español",
+                                  style: TextStyle(
+                                    color: Color(0xFFbcbcbd),
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w300,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(32.0),
+                              child: Center(
+                                child: TextFormField(
+                                  maxLines: 2,
+                                  onChanged: (value) {
+                                    if (!editingMode) {
+                                      setState(() {
+                                        originalText = value;
+                                        translateEsDeText();
+                                      });
+                                    }
+                                  },
+                                  textAlign: TextAlign.center,
+                                  // Center horizontally
+                                  textAlignVertical: TextAlignVertical.center,
+                                  controller: bottomTextEditingController,
+                                  decoration: const InputDecoration.collapsed(
+                                    hintText: 'Enter text',
+                                    hintStyle: TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 24,
+                                        color: Colors.grey),
+                                    border: InputBorder.none,
+                                  ),
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 24,
+                                      color: Colors.black),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              top: 10, // Adjust the top position as needed
+                              right: 10, // Adjust the right position as needed
+                              child: GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    if (editingMode) {
+                                      bottomTextEditingController.text = '';
+                                    } else {
+                                      topTextEditingController.text = '';
+                                      bottomTextEditingController.text = '';
+                                    }
+                                    translatedTextNotEmpty = false;
+                                  });
+                                },
+                                child: const SizedBox(
+                                  width: 30,
+                                  height: 30,
+                                  child: Icon(
+                                    Icons.clear,
+                                    color: Colors.black45,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              bottom: 0,
+                              right: 10,
+                              child: (conjugationResult != null)
+                                  ? ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Theme.of(context)
+                                            .primaryColor, // Use the primary color
+                                      ),
+                                      onPressed: () {
+                                        if (conjugationResult != null) {
+                                          debugPrint(
+                                              "conjugationResult != null ${extractLetters(conjugationResult!["verb"])}");
+                                        } else {
+                                          debugPrint(
+                                              "conjugationResult == null");
+                                        }
+
+                                        Navigator.pushNamed(
+                                          context,
+                                          ConjugationPage.routeName,
+                                          arguments: ConjugationArguments(
+                                            conjugationResult,
+                                          ),
+                                        );
+                                        // Add your button's onPressed functionality here
+                                      },
+                                      child: Text(
+                                          "Conjugate ${extractLetters(conjugationResult!["verb"])}"),
+                                    )
+                                  : Container(),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    Container(
+                      height: MediaQuery.of(context).size.width * 0.63,
+                    ),
+                  ],
                 ),
               ],
             ),
