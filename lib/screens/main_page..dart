@@ -1,4 +1,5 @@
 import 'package:flashlate/screens/conjugation_page.dart';
+import 'package:flashlate/screens/my_page.dart';
 import 'package:flashlate/services/cloud_function_service.dart';
 import 'package:flashlate/services/database_service.dart';
 import 'package:flutter/material.dart';
@@ -21,6 +22,8 @@ class _MainPageState extends State<MainPage> {
   String translatedText = '';
   bool uploadSuccess = false;
   bool originalIsTop = true;
+
+
   static const double cornerRadius = 20.0;
   static const secondBoxColor = Color(0xFFf8f8f8);
   static const addBoxColor = Color(0xFF2f3638);
@@ -129,11 +132,16 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
+    double factor = 0.40;
+    double translateBoxHeight = MediaQuery.of(context).size.width * factor; // 40 -> 14, 42 -> 12
+    double addBoxPadding = (1-factor-0.46)*100;
+
+
     return KeyboardVisibilityBuilder(builder: (context, visible) {
       return Scaffold(
         body: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: Column(
               children: [
                 TopBarWidget(
@@ -145,6 +153,16 @@ class _MainPageState extends State<MainPage> {
                   },
                 ),
                 // DropDown
+                /*ElevatedButton(
+                  child: Text("ghier"),
+                  onPressed: () {
+                    // Navigate to ScreenB when the button is pressed
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => MyPage()),
+                    );
+                  },
+                ),*/
                 Container(
                   height: 24,
                   decoration: BoxDecoration(
@@ -237,7 +255,7 @@ class _MainPageState extends State<MainPage> {
                     color: secondBoxColor,
                   ), // Adjust the radius as needed
                   child: Container(
-                    height: MediaQuery.of(context).size.width * 0.42,
+                    height: translateBoxHeight,
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(cornerRadius),
@@ -405,14 +423,14 @@ class _MainPageState extends State<MainPage> {
                               bottomRight: Radius.circular(cornerRadius),
                             ),
                           ),
-                          child: const Column(
+                          child: Column(
                             mainAxisAlignment: MainAxisAlignment.end,
                             // Align content to the bottom
                             children: [
                               Align(
                                 alignment: Alignment.center,
                                 child: Padding(
-                                  padding: EdgeInsets.all(12.0),
+                                  padding: EdgeInsets.all(addBoxPadding),
                                   child: Text(
                                     "Add Translation To Deck",
                                     style: TextStyle(color: Colors.white),
@@ -427,7 +445,7 @@ class _MainPageState extends State<MainPage> {
 
                     // Second Container
                     Container(
-                      height: MediaQuery.of(context).size.width * 0.42,
+                      height: translateBoxHeight,
                       decoration: const BoxDecoration(
                         color: secondBoxColor,
                         borderRadius: BorderRadius.only(
@@ -560,6 +578,7 @@ class _MainPageState extends State<MainPage> {
                     ),
                   ],
                 ),
+
               ],
             ),
           ),

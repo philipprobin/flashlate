@@ -1,10 +1,10 @@
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../services/database_service.dart';
 import '../services/local_storage_service.dart';
 import '../widgets/categorie_tile_widget.dart';
+import '../widgets/top_bar_without_toggle_widget.dart';
 import '../widgets/word_tile_widget.dart';
 
 class ListPage extends StatefulWidget {
@@ -19,6 +19,7 @@ class _ListPageState extends State<ListPage> {
   List<CategoryTileWidget> fetchedCategoryWidgets = [];
 
   String newDeckName = '';
+  static const double cornerRadius = 20.0;
 
   @override
   void initState() {
@@ -30,16 +31,14 @@ class _ListPageState extends State<ListPage> {
     });
   }
 
-  Future<void> _deleteDeck() async {
-    if (newDeckName.isNotEmpty) {
-      LocalStorageService.deleteDeck(newDeckName);
-      bool result = await databaseService.deleteDeck(newDeckName);
+  Future<void> _deleteDeck(String deckToDelete) async {
+    if (deckToDelete.isNotEmpty) {
+      LocalStorageService.deleteDeck(deckToDelete);
+      bool result = await databaseService.deleteDeck(deckToDelete);
       debugPrint("deck deleted: $result");
-
 
       _fetchData().then((categoryWidgets) {
         setState(() {
-          newDeckName = '';
           fetchedCategoryWidgets = categoryWidgets;
         });
       });
@@ -48,7 +47,6 @@ class _ListPageState extends State<ListPage> {
 
   Future<void> _addNewDeck() async {
     if (newDeckName.isNotEmpty) {
-
       LocalStorageService.setCurrentDeck(newDeckName);
 
       LocalStorageService.addDeck(newDeckName, true);
@@ -75,7 +73,8 @@ class _ListPageState extends State<ListPage> {
     debugPrint("decks mf $decks");*/
 
     //local
-    Map<String, dynamic> userDeck = await LocalStorageService.createMapListMapLocalDecks("");
+    Map<String, dynamic> userDeck =
+        await LocalStorageService.createMapListMapLocalDecks("");
 
     List<CategoryTileWidget> categoryWidgets = [];
 
@@ -85,13 +84,23 @@ class _ListPageState extends State<ListPage> {
         //String time = card['time'];
         Map<String, dynamic> translation = card['translation'];
         wordWidgets.add(WordTileWidget(
-            word: translation.keys.first, translation: translation.values.first.toString(), onDelete: () {  },));
+          word: translation.keys.first,
+          translation: translation.values.first.toString(),
+          onDelete: () {},
+        ));
       }
-      var categoryWidget =
-          CategoryTileWidget(deckName, wordWidgets.reversed.toList());
+      var categoryWidget = CategoryTileWidget(
+          deckName, wordWidgets.reversed.toList(), handleDeleteDeck);
       categoryWidgets.add(categoryWidget);
     });
     return categoryWidgets;
+  }
+
+  void handleDeleteDeck(String deckName) {
+    // Implement deck deletion logic here using deckName.
+    // This is where you delete the deck in the parent class.
+    debugPrint('Deleting deck: $deckName');
+    _deleteDeck(deckName);
   }
 
   @override
@@ -100,71 +109,141 @@ class _ListPageState extends State<ListPage> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 19.0),
+            child: TopBarWithoutToggleWidget(),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: ElevatedButton(
+                  onPressed: _addNewDeckPopUp, //then add new deck
+                  style: ElevatedButton.styleFrom(
+                    primary: Theme.of(context).primaryColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                  ),
+                  child: const Text('Create new deck',
+                      style: TextStyle(color: Colors.white)),
+                ),
+              ),
+              Container(
+                width: 12,
+              ),
+              /*ElevatedButton(
+                onPressed: _deleteDeck,
+                style: ElevatedButton.styleFrom(
+                  primary: Theme.of(context).primaryColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                ),
+                child: const Text('-', style: TextStyle(color: Colors.white)),
+              ),*/
+            ],
+          ),
+          Container(
+            width: MediaQuery.of(context).size.width,
             child: Padding(
               padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-              child: Row(
+                  const EdgeInsets.only(left: 16.0, right: 16.0, top: 16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8.0),
-                        color: Colors.grey[200],
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: TextField(
-                          onChanged: (value) {
-                            setState(() {
-                              newDeckName = value.trim();
-                            });
-                          },
-                          decoration: const InputDecoration(
-                            hintText: 'Enter a deck name',
-                            border: InputBorder.none,
-                          ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        "Decks",
+                        style: TextStyle(
+                          fontSize: 24.0,
                         ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  ElevatedButton(
-                    onPressed: _addNewDeck,
-                    style: ElevatedButton.styleFrom(
-                      primary: Theme.of(context).primaryColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                    ),
-                    child: const Text('+',
-                        style: TextStyle(color: Colors.white)),
-                  ),
-                  Container(
-                    width: 12,
-                  ),
-                  ElevatedButton(
-                    onPressed: _deleteDeck,
-                    style: ElevatedButton.styleFrom(
-                      primary: Theme.of(context).primaryColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                    ),
-                    child: const Text('-',
-                        style: TextStyle(color: Colors.white)),
+                    ],
                   ),
                 ],
               ),
             ),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(cornerRadius),
+                topRight: Radius.circular(cornerRadius),
+              ),
+            ),
           ),
           Expanded(
-            child: ListView(
-              children: fetchedCategoryWidgets.reversed.toList(),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+              ),
+              // doesnt need scrollview!!!!
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: ListView(
+                  children: fetchedCategoryWidgets.reversed.toList(),
+                ),
+              ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  void _addNewDeckPopUp() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+          title: Text(
+            'New Deckname',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+
+                textAlign: TextAlign.center,
+
+                onChanged: (value) {
+                  setState(() {
+                    newDeckName = value.trim();
+                  });
+                },
+                decoration: InputDecoration(
+                  hintText: 'Enter a deck name',
+                  border: InputBorder.none,
+                ),
+              ),
+              SizedBox(height: 16.0),
+              ElevatedButton(
+                onPressed: () {
+                  // Handle the deck creation logic here
+                  print('Creating deck: $newDeckName');
+                  _addNewDeck();
+                  Navigator.of(context).pop(); // Close the dialog
+                },
+                style: ElevatedButton.styleFrom(
+                  primary: Theme.of(context).primaryColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                ),
+                child: Text('Create'),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

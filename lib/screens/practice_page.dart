@@ -69,7 +69,6 @@ class _PracticePageState extends State<PracticePage> {
 
     debugPrint("localDecks $localDecks");
     localDecks.forEach((deckName, cards) {
-
       for (Map<String, dynamic> card in cards) {
         Map<String, dynamic> translation = card['translation'];
 
@@ -144,7 +143,7 @@ class _PracticePageState extends State<PracticePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).primaryColor,
+      backgroundColor: Colors.grey,
       body: Column(
         children: [
           Expanded(
@@ -155,25 +154,43 @@ class _PracticePageState extends State<PracticePage> {
                   controller: pageController,
                   itemCount: userDeck.length,
                   itemBuilder: (context, index) {
-                    return AnimatedSwitcher(
-                      duration: Duration(milliseconds: 300),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Container(
-                          key: ValueKey<int>(index),
-                          height: 150,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
+                    return Center(
+                      child: Stack(
+                        children: [
+                          AnimatedSwitcher(
+                            duration: Duration(milliseconds: 300),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Container(
+                                key: ValueKey<int>(index),
+                                height: MediaQuery.of(context).size.width * 0.4,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  showFrontSide
+                                      ? userDeck[index].keys.first
+                                      : userDeck[index].values.first,
+                                  style: TextStyle(fontSize: 20),
+                                ),
+                              ),
+                            ),
                           ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            showFrontSide
-                                ? userDeck[index].keys.first
-                                : userDeck[index].values.first,
-                            style: TextStyle(fontSize: 20),
+                          Positioned(
+                            top: 32, // Adjust the top position as needed
+                            right: 32, // Adjust the right position as needed
+                            child: SizedBox(
+                              width: 30,
+                              height: 30,
+                              child: Icon(
+                                Icons.touch_app_rounded,
+                                color: Colors.grey,
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
                     );
                   },
@@ -184,37 +201,85 @@ class _PracticePageState extends State<PracticePage> {
           // Button Row
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton(
-                  onPressed: () {
-                    // Handle the red button press (not specified in the original question).
-                    _moveAndAnimate((userDeck.length * 0.25).toInt());
-                  },
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                  child: Text('Bad'),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: OutlinedButton(
+                          onPressed: () {
+                            // Handle the button press.
+                            _moveAndAnimate(
+                                userDeck.length ~/ 2);
+                          },
+                          style: ButtonStyle(
+                            side: MaterialStateProperty.all(BorderSide(
+                              color: Color(0xFFe15055), // Outline color
+                              width: 2.0, // Adjust the width as needed
+                            )),
+                            foregroundColor: MaterialStateProperty.all(
+                              Color(0xFFe15055),
+                            ), // Font color
+                          ),
+                          child: Text('Bad'),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: OutlinedButton(
+                          onPressed: () {
+                            // Handle the button press.
+                            _moveAndAnimate(
+                                userDeck.length ~/ 2);
+                          },
+                          style: ButtonStyle(
+                            side: MaterialStateProperty.all(BorderSide(
+                              color: Color(0xfffbcb6e), // Outline color
+                              width: 2.0, // Adjust the width as needed
+                            )),
+                            foregroundColor: MaterialStateProperty.all(
+                                Color(0xfffbcb6e)), // Font color
+                          ),
+                          child: Text('Well'),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: OutlinedButton(
+                          onPressed: () {
+                            // Handle the button press.
+                            _moveAndAnimate(
+                                userDeck.length ~/ 2);
+                          },
+                          style: ButtonStyle(
+                            side: MaterialStateProperty.all(BorderSide(
+                              color: Theme.of(context)
+                                  .primaryColor, // Outline color
+                              width: 2.0, // Adjust the width as needed
+                            )),
+                            foregroundColor: MaterialStateProperty.all(
+                              Theme.of(context).primaryColor,
+                            ), // Font color
+                          ),
+                          child: Text('Nice'),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                ElevatedButton(
-                  onPressed: () {
-                    // Handle the yellow button press.
-                    _moveAndAnimate(
-                        userDeck.length ~/ 2); // Move to the middle.
-                  },
-                  style:
-                      ElevatedButton.styleFrom(backgroundColor: Colors.yellow),
-                  child: Text('Well'),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    // Handle the green button press.
-                    _moveAndAnimate(userDeck.length - 1);
-                  },
-                  style:
-                      ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                  child: Text('Nice!'),
-                ),
-              ],
+              ),
             ),
           ),
         ],

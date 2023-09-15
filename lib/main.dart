@@ -3,9 +3,11 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flashlate/screens/conjugation_page.dart';
 import 'package:flashlate/screens/list_page.dart';
 import 'package:flashlate/screens/main_page..dart';
+import 'package:flashlate/screens/my_page.dart';
 import 'package:flashlate/screens/practice_page.dart';
 import 'package:flashlate/services/authentification_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 void main() async {
@@ -43,7 +45,7 @@ class MyApp extends StatelessWidget {
         secondaryHeaderColor: const Color(0xFFececed), //ButtonColor
         highlightColor: const Color(0xFF303434),
         // Set the accent color
-        scaffoldBackgroundColor: const Color(0xFFEAEAEA),
+        scaffoldBackgroundColor: const Color(0xFFF8F7F8),
         appBarTheme: AppBarTheme(
           color: Colors.grey.shade300, // Set the app bar color
         ), colorScheme: ColorScheme.fromSwatch().copyWith(secondary: Colors.grey),
@@ -60,6 +62,8 @@ class MyApp extends StatelessWidget {
         '/list': (context) => ListPage(),
         '/auth': (context) => const AuthenticationService(),
         '/conjugation': (context) => ConjugationPage(),
+        '/my': (context) => MyPage(),
+
       },
     );
   }
@@ -76,6 +80,19 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _currentIndex = 1;
+
+  final List<String> _svgAssets = [
+    'assets/brain.svg', // Customize with your SVG paths
+    'assets/home.svg',
+    'assets/list.svg',
+  ];
+
+  final List<String> _iconTitle = [
+    'Practice', // Customize with your SVG paths
+    'Home',
+    'List',
+  ];
+
   final List<Widget> _tabs = [
     PracticePage(),
     const AuthenticationService(),
@@ -98,25 +115,26 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Colors.black,
         currentIndex: _currentIndex,
-        selectedItemColor: Colors.black,
+        selectedItemColor: Theme.of(context).primaryColor,
         onTap: _onTabTapped,
-        items: const [
-
-          BottomNavigationBarItem(
-            icon: Icon(Icons.play_circle_filled),
-            label: 'Practice',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Main',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.list),
-            label: 'List',
-          ),
+        items: [
+          for (int i = 0; i < _svgAssets.length; i++)
+            BottomNavigationBarItem(
+              icon: SvgPicture.asset(
+                _svgAssets[i],
+                width: 20, // Adjust width and height as needed
+                height: 20,
+                color: _currentIndex == i
+                    ? Theme.of(context).primaryColor // Selected color
+                    : Colors.white, // Default color
+              ),
+              label: _iconTitle[i],
+            ),
         ],
       ),
+
     );
   }
 }

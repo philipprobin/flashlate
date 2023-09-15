@@ -35,7 +35,7 @@ class _TopBarWidgetState extends State<TopBarWidget> {
               child: Container(
                 child: SvgPicture.asset(
                   'assets/image.svg',
-                  height: 60,
+                  height: 56,
                 ),
               ),
             ),
@@ -58,7 +58,7 @@ class _TopBarWidgetState extends State<TopBarWidget> {
                 ),
                 child: ToggleWidget(
                   width: 40,
-                  height: 35,
+                  height: 32,
                   icons: [
                     SvgPicture.asset(
                       'assets/translate.svg',

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class WordTileWidget extends StatelessWidget {
   final String word;
   final String translation;
-  final VoidCallback onDelete; // Callback to be called when swiped left
+  final VoidCallback onDelete; // Callback to be called when delete button is pressed
 
   WordTileWidget({
     required this.word,
@@ -13,28 +13,15 @@ class WordTileWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Dismissible(
-      key: Key(word), // Unique key for the Dismissible widget
-      direction: DismissDirection.endToStart,
-      background: Container(
-        color: Colors.red,
-        child: Align(
-          alignment: Alignment.centerRight,
-          child: Padding(
-            padding: const EdgeInsets.only(right: 20.0),
-            child: Icon(
-              Icons.delete,
-              color: Colors.white,
-            ),
-          ),
+    return ListTile(
+      title: Text(word),
+      subtitle: Text(translation),
+      trailing: IconButton(
+        icon: Icon(
+          Icons.delete,
+          color: Colors.black,
         ),
-      ),
-      onDismissed: (direction) {
-        onDelete(); // Trigger the onDelete callback when swiped left
-      },
-      child: ListTile(
-        title: Text(word),
-        subtitle: Text(translation),
+        onPressed: onDelete, // Call onDelete callback when the delete button is pressed
       ),
     );
   }

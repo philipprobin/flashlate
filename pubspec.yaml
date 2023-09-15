@@ -97,6 +97,9 @@ flutter:
     - assets/edit.svg
     - assets/translate.svg
     - assets/app_icon.png
+    - assets/home.svg
+    - assets/list.svg
+    - assets/brain.svg
 
   fonts:
     - family: AvertaStd
