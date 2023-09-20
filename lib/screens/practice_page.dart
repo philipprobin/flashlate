@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import '../services/cloud_function_service.dart';
 import '../services/database_service.dart';
 import '../services/local_storage_service.dart';
+import 'conjugation_page.dart';
+import 'main_page..dart';
 
 class PracticePage extends StatefulWidget {
   @override
@@ -15,6 +18,7 @@ class _PracticePageState extends State<PracticePage> {
   PageController pageController = PageController(initialPage: 0);
   int currentIndex = 0;
   bool showFrontSide = true;
+  Map<String, dynamic>? conjugationResult;
 
   @override
   void initState() {
@@ -43,6 +47,39 @@ class _PracticePageState extends State<PracticePage> {
 
     // Save the encoded userDeck to SharedPreferences
     await prefs.setStringList("pRaCtIcEmOde-$currentDeck", encodedUserDeck);
+  }
+
+  Future<void> verbIsShown(String word) async {
+    await showConjugations(word);
+  }
+
+  Future<bool> showConjugations(String translatedText) async {
+    debugPrint("showConjugations triggerd");
+    Map<String, dynamic>? conjugations =
+        await CloudFunctionService.fetchSpanishConjugations(translatedText);
+    if (conjugations != null) {
+      debugPrint(conjugations.toString());
+      setState(() {
+        conjugationResult = conjugations;
+      });
+
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  String extractLetters(String input) {
+    // Define a regular expression to match letters
+    final RegExp regex = RegExp(r'[^0-9]+');
+
+    // Use the RegExp pattern to find all matches in the input string
+    Iterable<Match> matches = regex.allMatches(input);
+
+    // Join the matched letters to form a new string
+    String result = matches.map((match) => match.group(0)!).join('');
+
+    return result;
   }
 
   Future<void> _fetchStoredData() async {
@@ -143,7 +180,7 @@ class _PracticePageState extends State<PracticePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey,
+      backgroundColor: Colors.grey[300],
       body: Column(
         children: [
           Expanded(
@@ -153,6 +190,8 @@ class _PracticePageState extends State<PracticePage> {
                 child: PageView.builder(
                   controller: pageController,
                   itemCount: userDeck.length,
+
+                  physics: NeverScrollableScrollPhysics(),
                   itemBuilder: (context, index) {
                     return Center(
                       child: Stack(
@@ -169,11 +208,15 @@ class _PracticePageState extends State<PracticePage> {
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 alignment: Alignment.center,
-                                child: Text(
-                                  showFrontSide
-                                      ? userDeck[index].keys.first
-                                      : userDeck[index].values.first,
-                                  style: TextStyle(fontSize: 20),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: Text(
+                                    showFrontSide
+                                        ? userDeck[index].keys.first
+                                        : userDeck[index].values.first,
+                                    style: TextStyle(fontSize: 20),
+                                    textAlign: TextAlign.center,
+                                  ),
                                 ),
                               ),
                             ),
@@ -189,6 +232,37 @@ class _PracticePageState extends State<PracticePage> {
                                 color: Colors.grey,
                               ),
                             ),
+                          ),
+                          Positioned(
+                            bottom: 0,
+                            right: 10,
+                            child: (conjugationResult != null)
+                                ? ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Theme.of(context)
+                                          .primaryColor, // Use the primary color
+                                    ),
+                                    onPressed: () {
+                                      if (conjugationResult != null) {
+                                        debugPrint(
+                                            "conjugationResult != null ${extractLetters(conjugationResult!["verb"])}");
+                                      } else {
+                                        debugPrint("conjugationResult == null");
+                                      }
+
+                                      Navigator.pushNamed(
+                                        context,
+                                        ConjugationPage.routeName,
+                                        arguments: ConjugationArguments(
+                                          conjugationResult,
+                                        ),
+                                      );
+                                      // Add your button's onPressed functionality here
+                                    },
+                                    child: Text(
+                                        "Conjugate ${extractLetters(conjugationResult!["verb"])}"),
+                                  )
+                                : Container(),
                           ),
                         ],
                       ),
@@ -217,8 +291,7 @@ class _PracticePageState extends State<PracticePage> {
                         child: OutlinedButton(
                           onPressed: () {
                             // Handle the button press.
-                            _moveAndAnimate(
-                                userDeck.length ~/ 2);
+                            _moveAndAnimate(userDeck.length ~/ 2);
                           },
                           style: ButtonStyle(
                             side: MaterialStateProperty.all(BorderSide(
@@ -239,8 +312,7 @@ class _PracticePageState extends State<PracticePage> {
                         child: OutlinedButton(
                           onPressed: () {
                             // Handle the button press.
-                            _moveAndAnimate(
-                                userDeck.length ~/ 2);
+                            _moveAndAnimate(userDeck.length ~/ 2);
                           },
                           style: ButtonStyle(
                             side: MaterialStateProperty.all(BorderSide(
@@ -260,8 +332,7 @@ class _PracticePageState extends State<PracticePage> {
                         child: OutlinedButton(
                           onPressed: () {
                             // Handle the button press.
-                            _moveAndAnimate(
-                                userDeck.length ~/ 2);
+                            _moveAndAnimate(userDeck.length ~/ 2);
                           },
                           style: ButtonStyle(
                             side: MaterialStateProperty.all(BorderSide(

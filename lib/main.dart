@@ -44,8 +44,11 @@ class MyApp extends StatelessWidget {
         primaryColor: const Color(0xFF00b894),
         secondaryHeaderColor: const Color(0xFFececed), //ButtonColor
         highlightColor: const Color(0xFF303434),
+        indicatorColor: const Color(0xFFE17055),
+        splashColor: const Color(0xFFFDCB6E),
         // Set the accent color
         scaffoldBackgroundColor: const Color(0xFFF8F7F8),
+        canvasColor: const Color(0xFF2d3436),
         appBarTheme: AppBarTheme(
           color: Colors.grey.shade300, // Set the app bar color
         ), colorScheme: ColorScheme.fromSwatch().copyWith(secondary: Colors.grey),

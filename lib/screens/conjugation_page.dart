@@ -11,6 +11,19 @@ class ConjugationPage extends StatelessWidget {
     return input[0].toUpperCase() + input.substring(1);
   }
 
+  String extractLetters(String input) {
+    // Define a regular expression to match letters
+    final RegExp regex = RegExp(r'[^0-9]+');
+
+    // Use the RegExp pattern to find all matches in the input string
+    Iterable<Match> matches = regex.allMatches(input);
+
+    // Join the matched letters to form a new string
+    String result = matches.map((match) => match.group(0)!).join('');
+
+    return result;
+  }
+
   @override
   Widget build(BuildContext context) {
     final args =
@@ -38,17 +51,19 @@ class ConjugationPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              capitalizeFirstLetter(args.verbConjugations?["verb"]),
+              extractLetters(capitalizeFirstLetter(args.verbConjugations?["verb"])),
               style: TextStyle(
                 fontSize: 36,
                 fontWeight: FontWeight.w700,
               ),
             ),
             Text(
-              "translation1, translation2",
+              args.verbConjugations?["translations"],
               style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
+                fontSize: 18,
+                fontStyle: FontStyle.italic,
+                fontWeight: FontWeight.w100,
+                color: Colors.grey[600]
               ),
             ),
             Container(

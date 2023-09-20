@@ -181,7 +181,7 @@ class _ListPageState extends State<ListPage> {
               ),
               // doesnt need scrollview!!!!
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                padding: const EdgeInsets.symmetric(horizontal: 15.0),
                 child: ListView(
                   children: fetchedCategoryWidgets.reversed.toList(),
                 ),
@@ -211,7 +211,7 @@ class _ListPageState extends State<ListPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
-
+                maxLength: 12,
                 textAlign: TextAlign.center,
 
                 onChanged: (value) {

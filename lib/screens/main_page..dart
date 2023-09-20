@@ -1,11 +1,12 @@
 import 'package:flashlate/screens/conjugation_page.dart';
-import 'package:flashlate/screens/my_page.dart';
 import 'package:flashlate/services/cloud_function_service.dart';
 import 'package:flashlate/services/database_service.dart';
+import 'package:flashlate/services/lang_local_storage_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flashlate/services/translation_service.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import '../services/local_storage_service.dart';
+import '../widgets/lang_drop_button_widget.dart';
 import '../widgets/top_bar_widget.dart';
 
 class MainPage extends StatefulWidget {
@@ -18,36 +19,69 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   final TranslationService translationService = TranslationService();
 
-  String originalText = '';
-  String translatedText = '';
+  String sourceText = '';
+  String targetText = '';
   bool uploadSuccess = false;
   bool originalIsTop = true;
 
-
   static const double cornerRadius = 20.0;
   static const secondBoxColor = Color(0xFFf8f8f8);
-  static const addBoxColor = Color(0xFF2f3638);
-  var translatedTextNotEmpty = false;
+  var targetTextNotEmpty = false;
 
-  TextEditingController bottomTextEditingController = TextEditingController();
-  TextEditingController topTextEditingController = TextEditingController();
+  TextEditingController targetTextEditingController = TextEditingController();
+  TextEditingController sourceTextEditingController = TextEditingController();
   bool editingMode = false;
   LocalStorageService localStorageService = LocalStorageService();
 
   List<Map<String, String>> storedData = [];
   List<String> dropdownItems = [];
+  List<String> langDropDownItems = [
+    "Deutsch",
+    "Español",
+    "English",
+    "Français",
+    "Polski",
+    "Português"
+  ];
   String currentDropdownValue = "";
+  String currentTargetValueLang = "Español";
+  String currentSourceValueLang = "Deutsch";
+
+  String originalVerb = "";
 
   Map<String, dynamic>? conjugationResult;
 
   @override
   void initState() {
     super.initState();
-
-    loadDropdownItemsFromPreferences();
+    loadDropdownLangValuesFromPreferences();
+    loadDropdownDeckItemsFromPreferences();
   }
 
-  Future<void> loadDropdownItemsFromPreferences() async {
+  Future<void> loadDropdownLangValuesFromPreferences() async {
+    String? currentSourceLang =
+        await LangLocalStorageService.getLanguage("source");
+    if (currentSourceLang == null) {
+      currentSourceLang = langDropDownItems[0];
+      await LangLocalStorageService.setLanguage(
+          "source", currentSourceLang); // like Español
+    }
+    String? currentTargetLang =
+        await LangLocalStorageService.getLanguage("target");
+    if (currentTargetLang == null) {
+      currentTargetLang = langDropDownItems[1];
+      await LangLocalStorageService.setLanguage(
+          "target", currentTargetLang); // like Español
+    }
+
+    setState(() {
+      // Update the state with the fetched items
+      currentTargetValueLang = currentTargetLang!;
+      currentSourceValueLang = currentSourceLang!;
+    });
+  }
+
+  Future<void> loadDropdownDeckItemsFromPreferences() async {
     // Fetch the items from local preferences (shared preferences)
 
     // creates new deck "Deck" if list empty
@@ -57,7 +91,6 @@ class _MainPageState extends State<MainPage> {
     debugPrint("currentDeck iiisss : $currentDeck");
 
     if (fetchedItems.isEmpty) {
-      // TODO: add App Icon
       // TODO: add more langs
     }
 
@@ -74,23 +107,25 @@ class _MainPageState extends State<MainPage> {
     });
   }
 
-  Future<void> translateDeEsText() async {
-    final translation =
-        await translationService.translateDeEsText(originalText);
-    showConjugations(translation);
+  Future<void> translateSourceText(String sourceLang, String targetLang) async {
+    final translation = await translationService.translateText(
+        sourceLang, targetLang, sourceText);
+    if (currentTargetValueLang == "Español") {
+      showSpanishConjugations(translation);
+    }
     setState(() {
-      translatedText = translation;
+      targetText = translation;
       originalIsTop = true;
-      bottomTextEditingController.text = translatedText;
-      translatedTextNotEmpty = translatedText.isNotEmpty ? true : false;
+      targetTextEditingController.text = targetText;
+      targetTextNotEmpty = targetText.isNotEmpty ? true : false;
 
-      debugPrint('Translated Text: $translatedText');
+      debugPrint('Translated Text: $targetText');
     });
   }
 
   String extractLetters(String input) {
     // Define a regular expression to match letters
-    final RegExp regex = RegExp(r'[a-zA-Z]+');
+    final RegExp regex = RegExp(r'[^0-9]+');
 
     // Use the RegExp pattern to find all matches in the input string
     Iterable<Match> matches = regex.allMatches(input);
@@ -101,15 +136,21 @@ class _MainPageState extends State<MainPage> {
     return result;
   }
 
-  Future<bool> showConjugations(String translatedText) async {
+  Future<bool> showSpanishConjugations(String translatedText) async {
     debugPrint("showConjugations triggerd");
     Map<String, dynamic>? conjugations =
-        await CloudFunctionService.fetchVerConjugations(translatedText);
+        await CloudFunctionService.fetchSpanishConjugations(translatedText);
+
     if (conjugations != null) {
+      if (originalVerb != conjugations["original_verb"]){
+        setState(() {
+          conjugationResult = conjugations;
+          originalVerb = conjugations["original_verb"];
+        });
+      }
+
       debugPrint(conjugations.toString());
-      setState(() {
-        conjugationResult = conjugations;
-      });
+
 
       return true;
     } else {
@@ -117,31 +158,36 @@ class _MainPageState extends State<MainPage> {
     }
   }
 
-  Future<void> translateEsDeText() async {
-    showConjugations(originalText);
-    final translation =
-        await translationService.translateEsDeText(originalText);
+  Future<void> translateTargetText(String sourceLang, String targetLang) async {
+    if (currentTargetValueLang == "Español") {
+      showSpanishConjugations(sourceText);
+    }
+    final translation = await translationService.translateText(
+        sourceLang, targetLang, sourceText);
     setState(() {
-      translatedText = translation;
-      translatedTextNotEmpty = translatedText.isNotEmpty ? true : false;
+      targetText = translation;
+      targetTextNotEmpty = targetText.isNotEmpty ? true : false;
       originalIsTop = false;
-      topTextEditingController.text = translatedText;
-      debugPrint('Translated Text: $translatedText');
+      sourceTextEditingController.text = targetText;
+      debugPrint('Translated Text: $targetText');
     });
   }
 
   @override
   Widget build(BuildContext context) {
     double factor = 0.40;
-    double translateBoxHeight = MediaQuery.of(context).size.width * factor; // 40 -> 14, 42 -> 12
-    double addBoxPadding = (1-factor-0.46)*100;
+    double translateBoxHeight =
+        MediaQuery.of(context).size.width * factor; // 40 -> 14, 42 -> 12
+    double addBoxPadding = (1 - factor - 0.46) * 100;
 
+    Color addBoxColor = Theme.of(context).primaryColor;
 
     return KeyboardVisibilityBuilder(builder: (context, visible) {
       return Scaffold(
         body: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: Column(
               children: [
                 TopBarWidget(
@@ -273,15 +319,20 @@ class _MainPageState extends State<MainPage> {
                                 onChanged: (value) {
                                   if (!editingMode) {
                                     setState(() {
-                                      originalText = value;
-                                      translateDeEsText();
+                                      sourceText = value;
+                                      if (value.isEmpty) {
+                                        targetText = "";
+                                      }
+                                      translateSourceText(
+                                          currentSourceValueLang,
+                                          currentTargetValueLang);
                                     });
                                   }
                                 },
                                 textAlign: TextAlign.center,
                                 // Center horizontally
                                 textAlignVertical: TextAlignVertical.center,
-                                controller: topTextEditingController,
+                                controller: sourceTextEditingController,
                                 decoration: const InputDecoration.collapsed(
                                   hintText: 'Enter text',
                                   hintStyle: TextStyle(
@@ -304,12 +355,12 @@ class _MainPageState extends State<MainPage> {
                               onTap: () {
                                 setState(() {
                                   if (editingMode) {
-                                    topTextEditingController.text = '';
+                                    sourceTextEditingController.text = '';
                                   } else {
-                                    topTextEditingController.text = '';
-                                    bottomTextEditingController.text = '';
+                                    sourceTextEditingController.text = '';
+                                    targetTextEditingController.text = '';
                                   }
-                                  translatedTextNotEmpty = false;
+                                  targetTextNotEmpty = false;
                                 });
                               },
                               child: const SizedBox(
@@ -322,25 +373,31 @@ class _MainPageState extends State<MainPage> {
                               ),
                             ),
                           ),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: const Text(
+                              "Source",
+                              style: TextStyle(
+                                color: Color(0xFFbcbcbd),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w300,
+                              ),
+                            ),
+                          ),
                           Positioned(
-                            top: 0,
-                            left: 10,
-                            child: TextButton(
-                              style: TextButton.styleFrom(
-                                backgroundColor: Theme.of(context).secondaryHeaderColor,
-                                // Other button styling options here
-                              ),
-                              onPressed: () {
-                                // Your button's onPressed code here
+                            top: 5,
+                            left: 15,
+                            child: LangDropButtonWidget(
+                              items: langDropDownItems,
+                              value: currentSourceValueLang,
+                              onChanged: (String? newValue) {
+                                // Handle the selected value here
+                                setState(() {
+                                  currentSourceValueLang = newValue!;
+                                  LangLocalStorageService.setLanguage(
+                                      "source", newValue);
+                                });
                               },
-                              child: const Text(
-                                "Deutsch",
-                                style: TextStyle(
-                                  color: Color(0xFFbcbcbd),
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w300,
-                                ),
-                              ),
                             ),
                           ),
                         ],
@@ -356,7 +413,7 @@ class _MainPageState extends State<MainPage> {
                     Positioned(
                       top: MediaQuery.of(context).size.width * 0.32,
                       child: ElevatedButton(
-                        onPressed: translatedTextNotEmpty
+                        onPressed: targetTextNotEmpty
                             ? () async {
                                 // Your button's onPressed code here...
                                 final databaseService = DatabaseService();
@@ -368,11 +425,15 @@ class _MainPageState extends State<MainPage> {
                                 String source = "";
                                 String target = "";
                                 if (originalIsTop) {
-                                  source = originalText.trim();
-                                  target = translatedText.trim();
+                                  source =
+                                      sourceTextEditingController.text.trim();
+                                  target =
+                                      targetTextEditingController.text.trim();
                                 } else {
-                                  source = translatedText.trim();
-                                  target = originalText.trim();
+                                  source =
+                                      targetTextEditingController.text.trim();
+                                  target =
+                                      sourceTextEditingController.text.trim();
                                 }
                                 LocalStorageService.addCardToLocalDeck(
                                     deckName, {source: target});
@@ -432,7 +493,7 @@ class _MainPageState extends State<MainPage> {
                                 child: Padding(
                                   padding: EdgeInsets.all(addBoxPadding),
                                   child: Text(
-                                    "Add Translation To Deck",
+                                    "Add Card To Deck",
                                     style: TextStyle(color: Colors.white),
                                   ),
                                 ),
@@ -456,27 +517,34 @@ class _MainPageState extends State<MainPage> {
                       child: Padding(
                         padding: const EdgeInsets.all(4.0),
                         child: Stack(
-                          alignment: Alignment.bottomCenter,
+                          alignment: Alignment.topCenter,
                           children: [
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: const Text(
+                                "Target",
+                                style: TextStyle(
+                                  color: Color(0xFFbcbcbd),
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w300,
+                                ),
+                              ),
+                            ),
+                            // lang target Dropdown
                             Positioned(
-                              top: 0,
-                              left: 10,
-                              child: TextButton(
-                                style: TextButton.styleFrom(
-                                  backgroundColor: Theme.of(context).secondaryHeaderColor,
-                                  // Other button styling options here
-                                ),
-                                onPressed: () {
-                                  // Your button's onPressed code here
+                              top: 5,
+                              left: 15,
+                              child: LangDropButtonWidget(
+                                items: langDropDownItems,
+                                value: currentTargetValueLang,
+                                onChanged: (String? newValue) {
+                                  // Handle the selected value here
+                                  setState(() {
+                                    currentTargetValueLang = newValue!;
+                                    LangLocalStorageService.setLanguage(
+                                        "target", newValue);
+                                  });
                                 },
-                                child: const Text(
-                                  "Español",
-                                  style: TextStyle(
-                                    color: Color(0xFFbcbcbd),
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w300,
-                                  ),
-                                ),
                               ),
                             ),
                             Padding(
@@ -487,15 +555,20 @@ class _MainPageState extends State<MainPage> {
                                   onChanged: (value) {
                                     if (!editingMode) {
                                       setState(() {
-                                        originalText = value;
-                                        translateEsDeText();
+                                        sourceText = value;
+                                        if (value.isEmpty) {
+                                          targetText = "";
+                                        }
+                                        translateTargetText(
+                                            currentTargetValueLang,
+                                            currentSourceValueLang);
                                       });
                                     }
                                   },
                                   textAlign: TextAlign.center,
                                   // Center horizontally
                                   textAlignVertical: TextAlignVertical.center,
-                                  controller: bottomTextEditingController,
+                                  controller: targetTextEditingController,
                                   decoration: const InputDecoration.collapsed(
                                     hintText: 'Enter text',
                                     hintStyle: TextStyle(
@@ -518,12 +591,12 @@ class _MainPageState extends State<MainPage> {
                                 onTap: () {
                                   setState(() {
                                     if (editingMode) {
-                                      bottomTextEditingController.text = '';
+                                      targetTextEditingController.text = '';
                                     } else {
-                                      topTextEditingController.text = '';
-                                      bottomTextEditingController.text = '';
+                                      sourceTextEditingController.text = '';
+                                      targetTextEditingController.text = '';
                                     }
-                                    translatedTextNotEmpty = false;
+                                    targetTextNotEmpty = false;
                                   });
                                 },
                                 child: const SizedBox(
@@ -540,32 +613,34 @@ class _MainPageState extends State<MainPage> {
                               bottom: 0,
                               right: 10,
                               child: (conjugationResult != null)
-                                  ? ElevatedButton(
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Theme.of(context)
-                                            .primaryColor, // Use the primary color
-                                      ),
-                                      onPressed: () {
-                                        if (conjugationResult != null) {
-                                          debugPrint(
-                                              "conjugationResult != null ${extractLetters(conjugationResult!["verb"])}");
-                                        } else {
-                                          debugPrint(
-                                              "conjugationResult == null");
-                                        }
+                                  ? (targetTextEditingController.text.contains(originalVerb))
+                                      ? ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                              backgroundColor: Theme.of(context)
+                                                  .indicatorColor // Use the primary color
+                                              ),
+                                          onPressed: () {
+                                            if (conjugationResult != null) {
+                                              debugPrint(
+                                                  "conjugationResult != null ${extractLetters(conjugationResult!["verb"])}");
+                                            } else {
+                                              debugPrint(
+                                                  "conjugationResult == null");
+                                            }
 
-                                        Navigator.pushNamed(
-                                          context,
-                                          ConjugationPage.routeName,
-                                          arguments: ConjugationArguments(
-                                            conjugationResult,
-                                          ),
-                                        );
-                                        // Add your button's onPressed functionality here
-                                      },
-                                      child: Text(
-                                          "Conjugate ${extractLetters(conjugationResult!["verb"])}"),
-                                    )
+                                            Navigator.pushNamed(
+                                              context,
+                                              ConjugationPage.routeName,
+                                              arguments: ConjugationArguments(
+                                                conjugationResult,
+                                              ),
+                                            );
+                                            // Add your button's onPressed functionality here
+                                          },
+                                          child: Text(
+                                              "Conjugate ${extractLetters(conjugationResult!["verb"])}"),
+                                        )
+                                      : Container()
                                   : Container(),
                             ),
                           ],
@@ -578,7 +653,6 @@ class _MainPageState extends State<MainPage> {
                     ),
                   ],
                 ),
-
               ],
             ),
           ),

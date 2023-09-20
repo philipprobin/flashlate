@@ -8,8 +8,17 @@ void main() async {
   final page = await browser.newPage();
 
   // Navigate to the URL.
-  final url = 'https://de.pons.com/verbtabellen/spanisch/';
-  await page.goto(url);
+  final half_url = 'https://konjugator.reverso.net/konjugation-spanisch-verb-';
+  final verb = 'volver';
+  final end = '.html';
+
+  print(half_url+verb+end);
+
+  await page.goto(half_url+verb+end);
+
+  final elements = await page.$$('div.word-translated-wrap');
+
+  print(elements);
 
   // Call another method from main.
 
