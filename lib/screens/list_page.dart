@@ -1,3 +1,5 @@
+import 'package:anim_search_bar/anim_search_bar.dart';
+import 'package:flashlate/widgets/anim_search_bar_widget.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -21,10 +23,13 @@ class _ListPageState extends State<ListPage> {
   String newDeckName = '';
   static const double cornerRadius = 20.0;
 
+
+  TextEditingController searchTextEditingController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
-    _fetchData().then((categoryWidgets) {
+    _fetchData("").then((categoryWidgets) {
       setState(() {
         fetchedCategoryWidgets = categoryWidgets;
       });
@@ -37,7 +42,7 @@ class _ListPageState extends State<ListPage> {
       bool result = await databaseService.deleteDeck(deckToDelete);
       debugPrint("deck deleted: $result");
 
-      _fetchData().then((categoryWidgets) {
+      _fetchData("").then((categoryWidgets) {
         setState(() {
           fetchedCategoryWidgets = categoryWidgets;
         });
@@ -58,7 +63,7 @@ class _ListPageState extends State<ListPage> {
       bool boolresult = await databaseService.addCard(newDeckName, "", "");
       debugPrint("ListPage boolresult $boolresult");
       // Refetch data and update UI
-      _fetchData().then((categoryWidgets) {
+      _fetchData("").then((categoryWidgets) {
         setState(() {
           fetchedCategoryWidgets = categoryWidgets;
         });
@@ -66,7 +71,7 @@ class _ListPageState extends State<ListPage> {
     }
   }
 
-  Future<List<CategoryTileWidget>> _fetchData() async {
+  Future<List<CategoryTileWidget>> _fetchData(String searchTerm) async {
     // dowload
 
     /*Map<String, dynamic> userDeck = await databaseService.fetchUserDoc();
@@ -94,6 +99,42 @@ class _ListPageState extends State<ListPage> {
       categoryWidgets.add(categoryWidget);
     });
     return categoryWidgets;
+    /*userDeck.forEach((deckName, cards) {
+      List<WordTileWidget> wordWidgets = [];
+
+      for (Map<String, dynamic> card in cards) {
+        Map<String, dynamic> translation = card['translation'];
+        String word = translation.keys.first;
+        String translationText = translation.values.first.toString();
+
+        // Check if the searchTerm is empty or if it exists in either the word or translation
+        if (searchTerm.isEmpty ||
+            deckName.toLowerCase().contains(searchTerm.toLowerCase()) ||
+            word.toLowerCase().contains(searchTerm.toLowerCase()) ||
+            translationText.toLowerCase().contains(searchTerm.toLowerCase())) {
+          wordWidgets.add(WordTileWidget(
+            word: word,
+            translation: translationText,
+            onDelete: () {},
+          ));
+        }
+      }
+
+      // Only add the categoryWidget if wordWidgets is not empty
+      if (wordWidgets.isNotEmpty) {
+        var categoryWidget = CategoryTileWidget(
+          deckName,
+          wordWidgets.reversed.toList(),
+          handleDeleteDeck,
+        );
+        debugPrint("wordWidgets word: ${wordWidgets.first.word}");
+
+        categoryWidgets.add(categoryWidget);
+      }
+
+    });
+
+    return categoryWidgets;*/
   }
 
   void handleDeleteDeck(String deckName) {
@@ -153,7 +194,8 @@ class _ListPageState extends State<ListPage> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Text(
                         "Decks",
@@ -161,6 +203,31 @@ class _ListPageState extends State<ListPage> {
                           fontSize: 24.0,
                         ),
                       ),
+                      /*Spacer(),
+                      AnimSearchBarWidget(
+                        boxShadow: false,
+                        width: MediaQuery.of(context).size.width * 0.6,
+                        rtl: false,
+                        textController: searchTextEditingController,
+                        onSuffixTap: () {
+                          setState(() {
+                            searchTextEditingController.clear();
+                            _fetchData("").then((categoryWidgets) {
+                              setState(() {
+                                fetchedCategoryWidgets = categoryWidgets;
+                              });
+                            });
+                          });
+                        }, onSubmitted: (String value) {
+                          debugPrint("state changed $value");
+
+                          _fetchData(value).then((categoryWidgets) {
+                            setState(() {
+                              fetchedCategoryWidgets = categoryWidgets;
+                            });
+                          });
+                      },
+                      ),*/
                     ],
                   ),
                 ],

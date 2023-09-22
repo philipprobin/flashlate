@@ -139,7 +139,7 @@ class _MainPageState extends State<MainPage> {
   Future<bool> showSpanishConjugations(String translatedText) async {
     debugPrint("showConjugations triggerd");
     Map<String, dynamic>? conjugations =
-        await CloudFunctionService.fetchSpanishConjugations(translatedText);
+        await CloudFunctionService.fetchSpanishConjugations(translatedText, currentSourceValueLang);
 
     if (conjugations != null) {
       if (originalVerb != conjugations["original_verb"]){
@@ -387,17 +387,20 @@ class _MainPageState extends State<MainPage> {
                           Positioned(
                             top: 5,
                             left: 15,
-                            child: LangDropButtonWidget(
-                              items: langDropDownItems,
-                              value: currentSourceValueLang,
-                              onChanged: (String? newValue) {
-                                // Handle the selected value here
-                                setState(() {
-                                  currentSourceValueLang = newValue!;
-                                  LangLocalStorageService.setLanguage(
-                                      "source", newValue);
-                                });
-                              },
+                            child: Container(
+                              color: Colors.white,
+                              child: LangDropButtonWidget(
+                                items: langDropDownItems,
+                                value: currentSourceValueLang,
+                                onChanged: (String? newValue) {
+                                  // Handle the selected value here
+                                  setState(() {
+                                    currentSourceValueLang = newValue!;
+                                    LangLocalStorageService.setLanguage(
+                                        "source", newValue);
+                                  });
+                                },
+                              ),
                             ),
                           ),
                         ],

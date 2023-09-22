@@ -49,7 +49,7 @@ class _PracticePageState extends State<PracticePage> {
     await prefs.setStringList("pRaCtIcEmOde-$currentDeck", encodedUserDeck);
   }
 
-  Future<void> verbIsShown(String word) async {
+/*  Future<void> verbIsShown(String word) async {
     await showConjugations(word);
   }
 
@@ -67,7 +67,7 @@ class _PracticePageState extends State<PracticePage> {
     } else {
       return false;
     }
-  }
+  }*/
 
   String extractLetters(String input) {
     // Define a regular expression to match letters

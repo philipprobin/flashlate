@@ -8,7 +8,6 @@ import 'package:flashlate/screens/practice_page.dart';
 import 'package:flashlate/services/authentification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -48,7 +47,7 @@ class MyApp extends StatelessWidget {
         splashColor: const Color(0xFFFDCB6E),
         // Set the accent color
         scaffoldBackgroundColor: const Color(0xFFF8F7F8),
-        canvasColor: const Color(0xFF2d3436),
+        // canvasColor: const Color(0xFF2d3436),
         appBarTheme: AppBarTheme(
           color: Colors.grey.shade300, // Set the app bar color
         ), colorScheme: ColorScheme.fromSwatch().copyWith(secondary: Colors.grey),

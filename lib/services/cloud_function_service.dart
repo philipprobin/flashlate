@@ -4,9 +4,9 @@ import 'package:http/http.dart' as http;
 class CloudFunctionService {
 
 
-  static Future<Map<String, dynamic>?> fetchSpanishConjugations(String verb) async {
-    const halfUrl = "https://us-central1-flashlate-397020.cloudfunctions.net/check_is_spanish_verb?verb=";
-    final url = Uri.parse("$halfUrl$verb");
+  static Future<Map<String, dynamic>?> fetchSpanishConjugations(String verb, String currentSourceValueLang) async {
+    const parameterlessUrl = "https://us-central1-flashlate-397020.cloudfunctions.net/check_is_spanish_verb?verb=";
+    final url = Uri.parse("$parameterlessUrl$verb&sourceLang=$currentSourceValueLang");
 
     try {
       final response = await http.get(url);

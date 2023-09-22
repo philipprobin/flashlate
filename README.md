@@ -2,7 +2,7 @@
 
 Flashcard app with integrated translate function
 
-<img src="images/main_page_full.jpeg" width="40%">
+<img src="images/main.jpeg" width="40%">
 
 ## My Idea:
 
@@ -13,19 +13,19 @@ Creating a translate Application that combines translations, flashcards, overvie
 ## The Main Page
 
 
-<img src="images/main_page_half.jpeg" width="40%">
+<img src="images/conj.jpeg" width="40%">
 
-The user can directly click on the language field, he wants to choose, without unnecessarily switching the language and clicking on the text field again.
+The user can directly conjugate verbs inside the app!
 
 ## The Practice Page
 
-<img src="images/practice_page.jpeg" width="40%">
+<img src="images/practice.jpeg" width="40%">
 
 The user can train his memory skills and use one of the best memorization techniques to learn a new language.
 
 ## The List Page
 
-<img src="images/list_page.jpeg" width="40%">
+<img src="images/list.jpeg" width="40%">
 
 The user gets an overview over all his practice decks. 
 
