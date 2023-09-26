@@ -1,10 +1,9 @@
-import 'package:anim_search_bar/anim_search_bar.dart';
-import 'package:flashlate/widgets/anim_search_bar_widget.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../services/database_service.dart';
 import '../services/local_storage_service.dart';
+import '../widgets/anim_search_bar_widget.dart';
 import '../widgets/categorie_tile_widget.dart';
 import '../widgets/top_bar_without_toggle_widget.dart';
 import '../widgets/word_tile_widget.dart';
@@ -20,41 +19,54 @@ class _ListPageState extends State<ListPage> {
 
   List<CategoryTileWidget> fetchedCategoryWidgets = [];
 
-  String newDeckName = '';
-  static const double cornerRadius = 20.0;
+  TextEditingController searchTextController = TextEditingController();
 
+  String newDeckName = '';
+  String searchTerm = '';
+  static const double cornerRadius = 20.0;
 
   TextEditingController searchTextEditingController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _fetchData("").then((categoryWidgets) {
+    _fetchData().then((categoryWidgets) {
       setState(() {
         fetchedCategoryWidgets = categoryWidgets;
       });
     });
   }
 
+  Future<bool> _updateFetchedCategoryWidgets() async {
+    List<CategoryTileWidget> categoryWidgets = await _fetchData();
+    setState(() {
+      fetchedCategoryWidgets = categoryWidgets;
+    });
+    return true;
+  }
+
+  Future<void> _handleSearchTextChange(String text) async {
+    setState(() {
+      searchTerm = text;
+    });
+    await _updateFetchedCategoryWidgets();
+  }
+
   Future<void> _deleteDeck(String deckToDelete) async {
     if (deckToDelete.isNotEmpty) {
-      LocalStorageService.deleteDeck(deckToDelete);
+      await LocalStorageService.deleteDeck(deckToDelete);
       bool result = await databaseService.deleteDeck(deckToDelete);
       debugPrint("deck deleted: $result");
 
-      _fetchData("").then((categoryWidgets) {
-        setState(() {
-          fetchedCategoryWidgets = categoryWidgets;
-        });
-      });
+      await _updateFetchedCategoryWidgets();
     }
   }
 
   Future<void> _addNewDeck() async {
     if (newDeckName.isNotEmpty) {
-      LocalStorageService.setCurrentDeck(newDeckName);
+      await LocalStorageService.setCurrentDeck(newDeckName);
 
-      LocalStorageService.addDeck(newDeckName, true);
+      await LocalStorageService.addDeck(newDeckName, true);
 
       // Clear the input field after adding
       setState(() {
@@ -63,15 +75,11 @@ class _ListPageState extends State<ListPage> {
       bool boolresult = await databaseService.addCard(newDeckName, "", "");
       debugPrint("ListPage boolresult $boolresult");
       // Refetch data and update UI
-      _fetchData("").then((categoryWidgets) {
-        setState(() {
-          fetchedCategoryWidgets = categoryWidgets;
-        });
-      });
+      await _updateFetchedCategoryWidgets();
     }
   }
 
-  Future<List<CategoryTileWidget>> _fetchData(String searchTerm) async {
+  Future<List<CategoryTileWidget>> _fetchData() async {
     // dowload
 
     /*Map<String, dynamic> userDeck = await databaseService.fetchUserDoc();
@@ -83,7 +91,7 @@ class _ListPageState extends State<ListPage> {
 
     List<CategoryTileWidget> categoryWidgets = [];
 
-    userDeck.forEach((deckName, cards) {
+    /*userDeck.forEach((deckName, cards) {
       List<WordTileWidget> wordWidgets = [];
       for (Map<String, dynamic> card in cards) {
         //String time = card['time'];
@@ -99,7 +107,8 @@ class _ListPageState extends State<ListPage> {
       categoryWidgets.add(categoryWidget);
     });
     return categoryWidgets;
-    /*userDeck.forEach((deckName, cards) {
+    */
+    userDeck.forEach((deckName, cards) {
       List<WordTileWidget> wordWidgets = [];
 
       for (Map<String, dynamic> card in cards) {
@@ -109,7 +118,6 @@ class _ListPageState extends State<ListPage> {
 
         // Check if the searchTerm is empty or if it exists in either the word or translation
         if (searchTerm.isEmpty ||
-            deckName.toLowerCase().contains(searchTerm.toLowerCase()) ||
             word.toLowerCase().contains(searchTerm.toLowerCase()) ||
             translationText.toLowerCase().contains(searchTerm.toLowerCase())) {
           wordWidgets.add(WordTileWidget(
@@ -121,20 +129,27 @@ class _ListPageState extends State<ListPage> {
       }
 
       // Only add the categoryWidget if wordWidgets is not empty
-      if (wordWidgets.isNotEmpty) {
+      // suche soll keine leeren decks anzeigen
+      // nach adden soll leer angezeigt werden
+      if (wordWidgets.isNotEmpty || searchTerm.isEmpty) {
         var categoryWidget = CategoryTileWidget(
           deckName,
           wordWidgets.reversed.toList(),
           handleDeleteDeck,
         );
-        debugPrint("wordWidgets word: ${wordWidgets.first.word}");
 
         categoryWidgets.add(categoryWidget);
       }
-
     });
 
-    return categoryWidgets;*/
+    /*if (categoryWidgets.isNotEmpty) {
+      for (CategoryTileWidget cat in categoryWidgets) {
+        for (WordTileWidget words in cat.words) {
+          debugPrint("data:::: ${words.word}, ${words.translation}");
+        }
+      }
+    }*/
+    return categoryWidgets;
   }
 
   void handleDeleteDeck(String deckName) {
@@ -203,6 +218,16 @@ class _ListPageState extends State<ListPage> {
                           fontSize: 24.0,
                         ),
                       ),
+                      Spacer(),
+                      AnimatedSearchBarWidget(
+                        searchTextEditingController: searchTextController,
+                        onTextChanged: (text) async {
+                          // Handle text changes in the parent class
+
+                          await _handleSearchTextChange(text);
+                        },
+                      ),
+
                       /*Spacer(),
                       AnimSearchBarWidget(
                         boxShadow: false,
@@ -212,20 +237,11 @@ class _ListPageState extends State<ListPage> {
                         onSuffixTap: () {
                           setState(() {
                             searchTextEditingController.clear();
-                            _fetchData("").then((categoryWidgets) {
-                              setState(() {
-                                fetchedCategoryWidgets = categoryWidgets;
-                              });
-                            });
+                            _handleSearchTextChange("");
                           });
                         }, onSubmitted: (String value) {
                           debugPrint("state changed $value");
-
-                          _fetchData(value).then((categoryWidgets) {
-                            setState(() {
-                              fetchedCategoryWidgets = categoryWidgets;
-                            });
-                          });
+                          _handleSearchTextChange(value);
                       },
                       ),*/
                     ],
@@ -249,8 +265,39 @@ class _ListPageState extends State<ListPage> {
               // doesnt need scrollview!!!!
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                child: ListView(
-                  children: fetchedCategoryWidgets.reversed.toList(),
+                child: FutureBuilder<List<CategoryTileWidget>>(
+                  future: _fetchData(),
+                  builder: (BuildContext context,
+                      AsyncSnapshot<List<CategoryTileWidget>> snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      // While the future is loading, show a loading indicator.
+                      return Center(
+                        child: Text('No data available.'),
+                      );
+                    } else if (snapshot.hasError) {
+                      // If there's an error, display an error message.
+                      return Center(
+                        child: Text('Error: ${snapshot.error.toString()}'),
+                      );
+                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      // If there's no data or the data is empty, show a message.
+                      return Center(
+                        child: Text('No data available.'),
+                      );
+                    } else {
+                      // If data is available, build the list of CategoryTileWidget.
+
+                      final reversedData = snapshot.data?.reversed.toList();
+
+                      // Build the ListView.builder with the reversed data.
+                      return ListView.builder(
+                        itemCount: reversedData?.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          return reversedData?[index];
+                        },
+                      );
+                    }
+                  },
                 ),
               ),
             ),
@@ -280,11 +327,8 @@ class _ListPageState extends State<ListPage> {
               TextField(
                 maxLength: 12,
                 textAlign: TextAlign.center,
-
                 onChanged: (value) {
-                  setState(() {
-                    newDeckName = value.trim();
-                  });
+                  newDeckName = value.trim();
                 },
                 decoration: InputDecoration(
                   hintText: 'Enter a deck name',

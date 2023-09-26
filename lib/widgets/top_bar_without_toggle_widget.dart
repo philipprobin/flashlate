@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_svg/svg.dart';
 
+import 'google_account_button.dart';
+
 class TopBarWithoutToggleWidget extends StatelessWidget {
   const TopBarWithoutToggleWidget({Key? key}) : super(key: key);
 
@@ -23,6 +25,7 @@ class TopBarWithoutToggleWidget extends StatelessWidget {
                 ),
               ),
             ),
+            GoogleAccountButton(),
           ],
         ),
       ),
