@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-import '../services/cloud_function_service.dart';
 import '../services/database_service.dart';
 import '../services/local_storage_service.dart';
 import 'conjugation_page.dart';
@@ -162,7 +161,7 @@ class _PracticePageState extends State<PracticePage> {
   }
 
   // Update _swipeCard method as follows
-  void _swipeCard(int delta) {
+  /*void _swipeCard(int delta) {
     int newIndex = currentIndex + delta;
     if (newIndex >= 0 && newIndex < userDeck.length) {
       setState(() {
@@ -175,7 +174,7 @@ class _PracticePageState extends State<PracticePage> {
         showFrontSide = true;
       });
     }
-  }
+  }*/
 
   @override
   Widget build(BuildContext context) {
@@ -185,12 +184,11 @@ class _PracticePageState extends State<PracticePage> {
         children: [
           Expanded(
             child: Center(
-              child: GestureDetector(
+              child: userDeck.isNotEmpty? GestureDetector(
                 onTap: _handleCardTap,
                 child: PageView.builder(
                   controller: pageController,
                   itemCount: userDeck.length,
-
                   physics: NeverScrollableScrollPhysics(),
                   itemBuilder: (context, index) {
                     return Center(
@@ -269,8 +267,8 @@ class _PracticePageState extends State<PracticePage> {
                     );
                   },
                 ),
-              ),
-            ),
+              ) : Text("Add Cards to Deck first..."),
+            ) ,
           ),
           // Button Row
           Padding(
@@ -291,7 +289,7 @@ class _PracticePageState extends State<PracticePage> {
                         child: OutlinedButton(
                           onPressed: () {
                             // Handle the button press.
-                            _moveAndAnimate(userDeck.length ~/ 2);
+                            _moveAndAnimate((userDeck.length *0.25).toInt());
                           },
                           style: ButtonStyle(
                             side: MaterialStateProperty.all(BorderSide(
@@ -332,7 +330,7 @@ class _PracticePageState extends State<PracticePage> {
                         child: OutlinedButton(
                           onPressed: () {
                             // Handle the button press.
-                            _moveAndAnimate(userDeck.length ~/ 2);
+                            _moveAndAnimate(userDeck.length -1);
                           },
                           style: ButtonStyle(
                             side: MaterialStateProperty.all(BorderSide(

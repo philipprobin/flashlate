@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flashlate/services/synchronize_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../screens/main_page..dart';
 
@@ -17,11 +18,27 @@ class AuthenticationService extends StatefulWidget {
 class _AuthenticationServiceState extends State<AuthenticationService> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email']);
+  bool isFirstRun = true; // Flag to track if it's the first run
+
 
   @override
   void initState() {
     super.initState();
-    checkAndSignIn(); // Check and sign in user when the widget is initialized
+    _checkFirstRunAndSignIn(); // Check and sign in user when the widget is initialized
+  }
+
+  Future<void> _checkFirstRunAndSignIn() async {
+    // Load the flag from shared preferences
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    isFirstRun = prefs.getBool('firstRun') ?? true;
+
+    if (isFirstRun) {
+      // This is the first run, call checkAndSignIn
+      await checkAndSignIn();
+
+      // Set the flag to false so that it won't run again
+      await prefs.setBool('firstRun', false);
+    }
   }
 
   Future<void> checkAndSignIn() async {
@@ -44,7 +61,7 @@ class _AuthenticationServiceState extends State<AuthenticationService> {
           final DocumentSnapshot userDoc = await flashcardsCollection.doc(userCredential.user!.uid).get();
           if (!userDoc.exists) {
             await flashcardsCollection.doc(userCredential.user!.uid).set({
-              'names': userCredential.user!.displayName,
+              'Deck': [],
               // Add more fields if needed
             });
             debugPrint('User document added to flashcards collection.');

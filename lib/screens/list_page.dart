@@ -1,11 +1,9 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-
 import '../services/database_service.dart';
 import '../services/local_storage_service.dart';
 import '../widgets/anim_search_bar_widget.dart';
 import '../widgets/categorie_tile_widget.dart';
-import '../widgets/top_bar_without_toggle_widget.dart';
+import '../widgets/app_bar_list_widget.dart';
 import '../widgets/word_tile_widget.dart';
 
 class ListPage extends StatefulWidget {
@@ -164,10 +162,7 @@ class _ListPageState extends State<ListPage> {
     return Scaffold(
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 19.0),
-            child: TopBarWithoutToggleWidget(),
-          ),
+          AppBarListWidget(),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
@@ -176,7 +171,7 @@ class _ListPageState extends State<ListPage> {
                 child: ElevatedButton(
                   onPressed: _addNewDeckPopUp, //then add new deck
                   style: ElevatedButton.styleFrom(
-                    primary: Theme.of(context).primaryColor,
+                    backgroundColor: Theme.of(context).primaryColor,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8.0),
                     ),
@@ -344,7 +339,7 @@ class _ListPageState extends State<ListPage> {
                   Navigator.of(context).pop(); // Close the dialog
                 },
                 style: ElevatedButton.styleFrom(
-                  primary: Theme.of(context).primaryColor,
+                  backgroundColor: Theme.of(context).primaryColor,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.0),
                   ),

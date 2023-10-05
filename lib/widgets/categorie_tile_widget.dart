@@ -1,7 +1,6 @@
 import 'package:flashlate/services/database_service.dart';
 import 'package:flashlate/services/local_storage_service.dart';
 import 'package:flashlate/widgets/word_tile_widget.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 typedef DeleteDeckCallback = void Function(String deckName);

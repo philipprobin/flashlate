@@ -2,8 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 
-import 'local_storage_service.dart';
-
 class DatabaseService {
   static Future<DocumentReference<Map<String, dynamic>>?>
       get _userDocRef async {
@@ -17,6 +15,23 @@ class DatabaseService {
     final userId = user.uid;
     final userDocRef =
         FirebaseFirestore.instance.collection('flashcards').doc(userId);
+
+    // Check if the document exists
+    await userDocRef.get().then((docSnapshot) {
+      if (!docSnapshot.exists) {
+        // Document doesn't exist, so create an empty one
+        userDocRef.set({}).then((_) {
+          // Empty document created successfully
+          debugPrint("document $userId newly added");
+        }).catchError((error) {
+          // Handle errors, e.g., document creation failed
+          debugPrint("document creation failed: $error");
+        });
+      }
+    }).catchError((error) {
+      // Handle errors, e.g., getting document failed
+      debugPrint("getting document failed: $error");
+    });
     return userDocRef;
   }
 
@@ -31,7 +46,7 @@ class DatabaseService {
     if (userDocSnapshot.exists) {
       return userDocSnapshot.data() as Map<String, dynamic>;
     } else {
-      debugPrint("userDoc does not exist");
+      debugPrint("userDoc does not exist (fetchUserDoc)");
     }
 
     return {};
@@ -101,7 +116,7 @@ class DatabaseService {
         return false;
       }
     } else {
-      debugPrint("userDoc does not exist");
+      debugPrint("userDoc does not exist (addCard)");
       return false;
     }
   }

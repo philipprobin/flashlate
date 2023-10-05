@@ -89,7 +89,6 @@ class ConjugationPage extends StatelessWidget {
   Widget _buildConjugationList(
       String title, Map<String, dynamic> conjugations) {
     List<Widget> conjugationRows = [];
-    bool isWhiteBackground = true; // Variable to alternate row backgrounds
 
     List<String> customOrder = [
       'yo',

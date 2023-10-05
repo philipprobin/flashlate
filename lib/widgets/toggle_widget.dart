@@ -10,9 +10,9 @@ class ToggleWidget extends StatefulWidget {
     required this.height,
     required this.labels,
     this.cornerRadius = 10,
-    this.backgroundColor = Colors.white,
-    this.selectedColor = Colors.green,
-    this.disabledElementColor = Colors.green,
+    this.backgroundColor = Colors.black26,
+    this.selectedColor = Colors.black,
+    this.disabledElementColor = Colors.black54,
     this.enabledElementColor = Colors.white,
     this.fontSize = 16.0,
     this.icons,
@@ -97,8 +97,8 @@ class _State extends State<ToggleWidget> {
   late final Widget _selectedSwitch;
   late final BorderRadius _roundedRadius;
 
+  double _leftMargin = 0.0;
   int _selectedIndex = 0;
-  double _topMargin = 0.0;
 
   @override
   void initState() {
@@ -127,15 +127,12 @@ class _State extends State<ToggleWidget> {
         highlightColor: Colors.white54,
         borderRadius: _roundedRadius,
         radius: 50,
-        onTap: () {
-          debugPrint('tap');
-        },
+        onTap: () {},
         onTapDown: (TapDownDetails details) {
-          final int index = details.localPosition.dy ~/ widget.height;
-          debugPrint("current index $index");
+          final int index = details.localPosition.dx ~/ widget.width;
           setState(() {
             _selectedIndex = index;
-            _topMargin = (index * (widget.height));
+            _leftMargin = (index * (widget.width));
           });
           if (widget.onSelected != null) {
             widget.onSelected!(index, widget);
@@ -143,24 +140,23 @@ class _State extends State<ToggleWidget> {
           debugPrint('tapDown');
         },
         child: SizedBox(
-          width: widget.width,
-          height: widget.height * widget.labels.length, // Adjust the height
+          width: widget.width * widget.labels.length,
+          height: widget.height,
           child: Stack(
             children: [
               Padding(
-                padding: EdgeInsets.only(top: _topMargin), // Adjust the top padding
+                padding: EdgeInsets.only(left: _leftMargin),
                 child: _selectedSwitch,
               ),
               Positioned.fill(
                 child: Align(
                   alignment: Alignment.center,
-                  child: Column( // Use Column to stack buttons vertically
-                    crossAxisAlignment: CrossAxisAlignment.center,
+                  child: Row( // Use Row instead of Column
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: _buildLabels(),
                   ),
                 ),
-              ),
+              )
             ],
           ),
         ),
@@ -199,7 +195,6 @@ class _State extends State<ToggleWidget> {
             ],
           ),
         ),
-
       );
       list.add(child);
     });

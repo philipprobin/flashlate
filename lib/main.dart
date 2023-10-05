@@ -7,6 +7,7 @@ import 'package:flashlate/screens/my_page.dart';
 import 'package:flashlate/screens/practice_page.dart';
 import 'package:flashlate/services/authentification_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 
 void main() async {
@@ -37,6 +38,9 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarColor: const Color(0xFF008772), // Change the color to your desired color
+    ));
     return MaterialApp(
       theme: ThemeData(
         fontFamily: "AvertaStd",
