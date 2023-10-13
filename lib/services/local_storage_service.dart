@@ -176,6 +176,7 @@ class LocalStorageService {
 
     for (Map<String, dynamic> deckDict in deck) {
       String encodedDict = json.encode(deckDict);
+      // add
       encodedUpdatedDeck.add(encodedDict);
     }
 
@@ -234,6 +235,76 @@ class LocalStorageService {
     }
   }
 
+  static Future<bool> allSolved(String listName) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    // Check if the SharedPreferences entry with the listName exists
+    if (!prefs.containsKey(listName)) {
+      return false; // The deck doesn't exist, so nothing to update
+    }
+
+    // Retrieve the existing deck from shared preferences
+    List<String>? encodedDeck = prefs.getStringList(listName);
+    List<Map<String, dynamic>> deck = [];
+
+    // Copy to List
+    if (encodedDeck != null) {
+      for (String encodedDict in encodedDeck) {
+        Map<String, dynamic> decodedDict = json.decode(encodedDict);
+        deck.add(decodedDict);
+      }
+    }
+
+    // Find and update the card in the deck
+    for (int i = 0; i < deck.length; i++) {
+      if (deck[i]["toLearn"] == true){
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  static Future<void> updateCardInDeck(String listName, Map<String, dynamic> oldCard, Map<String, dynamic> newCard) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    // Check if the SharedPreferences entry with the listName exists
+    if (!prefs.containsKey(listName)) {
+      return; // The deck doesn't exist, so nothing to update
+    }
+
+    // Retrieve the existing deck from shared preferences
+    List<String>? encodedDeck = prefs.getStringList(listName);
+    List<Map<String, dynamic>> deck = [];
+
+    // Copy to List
+    if (encodedDeck != null) {
+      for (String encodedDict in encodedDeck) {
+        Map<String, dynamic> decodedDict = json.decode(encodedDict);
+        deck.add(decodedDict);
+      }
+    }
+
+    // Find and update the card in the deck
+    for (int i = 0; i < deck.length; i++) {
+      debugPrint("check: ${deck[i].toString()} ${oldCard.toString()}");
+      if (deck[i].toString() == oldCard["translation"].toString() || deck[i]["translation"].toString() == oldCard["translation"].toString()) {
+        debugPrint("match");
+        deck[i] = newCard; // Update the card3
+        break;
+      }
+    }
+    debugPrint("oldCard $oldCard");
+    debugPrint("newCard $newCard");
+    debugPrint("updateCardInDeck $deck");
+
+    // Save the updated deck to shared preferences
+    List<String> encodedUpdatedDeck = deck.map((deckDict) => json.encode(deckDict)).toList();
+
+    await prefs.setStringList(listName, encodedUpdatedDeck);
+  }
+
+
   static Future<List<Map<String, dynamic>>> fetchLocalDeck(
       String listName) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -265,18 +336,47 @@ class LocalStorageService {
       allDecks = [specificDeck];
     }
     for (String deck in allDecks) {
+      //debugPrint("the deck doesnt work $deck");
       List<Map<String, dynamic>> fetchedLocalDeck =
           await LocalStorageService.fetchLocalDeck(deck);
+
       List<Map<String, dynamic>> cardListOneDeck = [];
+      debugPrint("fetchedLocalDeck: $fetchedLocalDeck");
       for (Map<String, dynamic> card in fetchedLocalDeck) {
-        cardListOneDeck.add({
-          "translation": {card.keys.first: card.values.first}
-        });
+        cardListOneDeck.add(cardWithToLearn(card));
       }
       localDecks[deck] = cardListOneDeck;
     }
-    // example: localDecks {Deckel : [{translation: {Gruppe : grupo}}, {translation: {oktupus: pulpo}}], Haben : [],}
+    // example: localDecks {Deckel : [{: {Gruppe : grupo}}, {translation: {oktupus: pulpo}}], Haben : [],}
     return localDecks;
+  }
+
+  static Map<String, dynamic> cardWithToLearn(Map<String, dynamic> card) {
+    Map<String, dynamic> newCard = {};
+
+    // copy values in newCard
+    card.forEach((key, value) {
+      if (key != "toLearn") {
+        // is translation already saved under practice-deck?
+        if (key == "translation" && value is Map<String, dynamic>) {
+          // Copy the "translation" key along with its map value to the new card
+          newCard["translation"] = Map.from(value);
+        }else {
+          // add the translation, occurs the first time practice deck is opened
+          newCard["translation"] = {key: value};
+        }
+      }
+      /*old: {translation: {dismiss: zurückweisen}, toLearn: false}
+        new: {translation: {translation: {dismiss: zurückweisen}}, toLearn: false}*/
+      if (key == "toLearn") {
+        newCard["toLearn"] = value;
+      }
+    });
+    // if toLearn not available yet, add it
+    if (!newCard.containsKey("toLearn")) {
+      newCard["toLearn"] = true;
+    }
+    return newCard;
   }
 
   static Future<bool> checkDeckIsEmpty(String deckName) async {
@@ -292,5 +392,24 @@ class LocalStorageService {
 
     // Deck doesn't exist, so it's considered empty
     return true;
+  }
+
+  static Future<void> setPracticeCardsToLearnTrue(String deckName) async {
+    List<Map<String, dynamic>> fetchedLocalDeck =
+    await LocalStorageService.fetchLocalDeck(deckName);
+
+    // Iterate through the list and set 'toLearn' to false for all maps
+    for (int i = 0; i < fetchedLocalDeck.length; i++) {
+      print("setToTrue ${fetchedLocalDeck[i]["toLearn"]}");
+      fetchedLocalDeck[i]["toLearn"] = true;
+      print("setToTrue new ${fetchedLocalDeck[i]["toLearn"]}");
+    }
+
+    // Save the JSON string to SharedPreferences under the deckName instance
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    List<String> encodedUpdatedDeck = fetchedLocalDeck.map((deckDict) => json.encode(deckDict)).toList();
+
+    await prefs.setStringList(deckName, encodedUpdatedDeck);
   }
 }

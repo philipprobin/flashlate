@@ -1,4 +1,3 @@
-
 import 'package:flashlate/screens/conjugation_page.dart';
 import 'package:flashlate/services/cloud_function_service.dart';
 import 'package:flashlate/services/database_service.dart';
@@ -23,11 +22,9 @@ class _MainPageState extends State<MainPage> {
   String sourceText = '';
   String targetText = '';
   bool uploadSuccess = false;
-  bool originalIsTop = true;
 
   static const double cornerRadius = 20.0;
   static const secondBoxColor = Color(0xFFf8f8f8);
-  var targetTextNotEmpty = false;
 
   TextEditingController targetTextEditingController = TextEditingController();
   TextEditingController sourceTextEditingController = TextEditingController();
@@ -43,6 +40,7 @@ class _MainPageState extends State<MainPage> {
     "Français",
     "Polski",
     "Português"
+        "Italiano"
   ];
   String currentDropdownValue = "";
   String currentTargetValueLang = "Español";
@@ -60,7 +58,6 @@ class _MainPageState extends State<MainPage> {
   }
 
   Future<void> refreshOnTogglePress(bool mode) async {
-
     setState(() {
       if (!mode) {
         debugPrint("translateMode: $targetText");
@@ -128,9 +125,7 @@ class _MainPageState extends State<MainPage> {
     }
     setState(() {
       targetText = translation;
-      originalIsTop = true;
       targetTextEditingController.text = targetText;
-      targetTextNotEmpty = targetText.isNotEmpty ? true : false;
 
       debugPrint('Translated Text: $targetText');
     });
@@ -179,8 +174,6 @@ class _MainPageState extends State<MainPage> {
         sourceLang, targetLang, sourceText);
     setState(() {
       targetText = translation;
-      targetTextNotEmpty = targetText.isNotEmpty ? true : false;
-      originalIsTop = false;
       sourceTextEditingController.text = targetText;
       debugPrint('Translated Text: $targetText');
     });
@@ -335,6 +328,9 @@ class _MainPageState extends State<MainPage> {
                                               currentSourceValueLang,
                                               currentTargetValueLang);
                                         });
+                                      } else {
+                                        // just to update add card to deck button color if empty, bc of reload
+                                        setState(() {});
                                       }
                                     },
                                     textAlign: TextAlign.center,
@@ -366,11 +362,13 @@ class _MainPageState extends State<MainPage> {
                                     setState(() {
                                       if (editingMode) {
                                         sourceTextEditingController.text = '';
+                                        sourceText = "";
                                       } else {
                                         sourceTextEditingController.text = '';
                                         targetTextEditingController.text = '';
+                                        sourceText = "";
+                                        targetText = "";
                                       }
-                                      targetTextNotEmpty = false;
                                     });
                                   },
                                   child: const SizedBox(
@@ -425,7 +423,9 @@ class _MainPageState extends State<MainPage> {
                         Positioned(
                           top: MediaQuery.of(context).size.width * 0.32,
                           child: ElevatedButton(
-                            onPressed: targetTextNotEmpty
+                            onPressed: (sourceTextEditingController
+                                        .text.isNotEmpty &&
+                                    targetTextEditingController.text.isNotEmpty)
                                 ? () async {
                                     // Your button's onPressed code here...
                                     final databaseService = DatabaseService();
@@ -436,17 +436,11 @@ class _MainPageState extends State<MainPage> {
                                     // add card to card list
                                     String source = "";
                                     String target = "";
-                                    if (originalIsTop) {
-                                      source = sourceTextEditingController.text
-                                          .trim();
-                                      target = targetTextEditingController.text
-                                          .trim();
-                                    } else {
-                                      source = targetTextEditingController.text
-                                          .trim();
-                                      target = sourceTextEditingController.text
-                                          .trim();
-                                    }
+
+                                    source =
+                                        sourceTextEditingController.text.trim();
+                                    target =
+                                        targetTextEditingController.text.trim();
                                     LocalStorageService.addCardToLocalDeck(
                                         deckName, {source: target});
                                     bool practiceDeckIsEmpty =
@@ -568,6 +562,7 @@ class _MainPageState extends State<MainPage> {
                                     child: TextFormField(
                                       maxLines: 2,
                                       onChanged: (value) {
+
                                         if (!editingMode) {
                                           setState(() {
                                             sourceText = value;
@@ -578,6 +573,8 @@ class _MainPageState extends State<MainPage> {
                                                 currentTargetValueLang,
                                                 currentSourceValueLang);
                                           });
+                                        } else {
+                                          setState(() {});
                                         }
                                       },
                                       textAlign: TextAlign.center,
@@ -611,11 +608,14 @@ class _MainPageState extends State<MainPage> {
                                       setState(() {
                                         if (editingMode) {
                                           targetTextEditingController.text = '';
+                                          targetText = "";
+                                          ;
                                         } else {
                                           sourceTextEditingController.text = '';
                                           targetTextEditingController.text = '';
+                                          targetText = "";
+                                          sourceText = "";
                                         }
-                                        targetTextNotEmpty = false;
                                       });
                                     },
                                     child: const SizedBox(

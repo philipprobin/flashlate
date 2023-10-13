@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
 import '../services/database_service.dart';
 import '../services/local_storage_service.dart';
 import 'conjugation_page.dart';
@@ -12,40 +10,18 @@ class PracticePage extends StatefulWidget {
 }
 
 class _PracticePageState extends State<PracticePage> {
-  List<Map<String, String>> userDeck = [];
+  List<Map<String, dynamic>> userDeck = [];
   final databaseService = DatabaseService();
   PageController pageController = PageController(initialPage: 0);
   int currentIndex = 0;
   bool showFrontSide = true;
   Map<String, dynamic>? conjugationResult;
+  String currentDeck = "";
 
   @override
   void initState() {
     super.initState();
     _fetchStoredData();
-  }
-
-  @override
-  void dispose() {
-    _savePracticeDeck();
-    debugPrint("disposed!!!");
-    super.dispose();
-  }
-
-  Future<void> _savePracticeDeck() async {
-    String currentDeck = await LocalStorageService.getCurrentDeck();
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-
-    // Convert userDeck to a list of encoded strings
-    List<String> encodedUserDeck = [];
-
-    for (Map<String, String> card in userDeck) {
-      String encodedCard = json.encode(card);
-      encodedUserDeck.add(encodedCard);
-    }
-
-    // Save the encoded userDeck to SharedPreferences
-    await prefs.setStringList("pRaCtIcEmOde-$currentDeck", encodedUserDeck);
   }
 
 /*  Future<void> verbIsShown(String word) async {
@@ -70,7 +46,7 @@ class _PracticePageState extends State<PracticePage> {
 
   String extractLetters(String input) {
     // Define a regular expression to match letters
-    final RegExp regex = RegExp(r'[^0-9]+');
+    final RegExp regex = RegExp(r'\D+');
 
     // Use the RegExp pattern to find all matches in the input string
     Iterable<Match> matches = regex.allMatches(input);
@@ -87,35 +63,51 @@ class _PracticePageState extends State<PracticePage> {
     // local
     // Map<String,dynamic> localDecks = await LocalStorageService.createMapListMapLocalDecks("");
 
-    String currentDeck = await LocalStorageService.getCurrentDeck();
+    currentDeck = await LocalStorageService.getCurrentDeck();
 
-    List<Map<String, String>> cardsList = [];
+    List<Map<String, dynamic>> cardsList = [];
 
+    //await LocalStorageService.deleteDeck("pRaCtIcEmOde-$currentDeck");
     bool practiceDeckIsEmpty =
         await LocalStorageService.checkDeckIsEmpty("pRaCtIcEmOde-$currentDeck");
 
+    debugPrint("practiceDeckIsEmpty: $practiceDeckIsEmpty");
+
     if (practiceDeckIsEmpty) {
+      // toLearn doesnt exist yet
       bool res = await LocalStorageService.copyDeckToPracticeMode(currentDeck);
       debugPrint("copyDeckToPracticeMode $res");
     }
 
+    /*var fetch = await LocalStorageService.fetchLocalDeck("pRaCtIcEmOde-$currentDeck");
+    debugPrint("before $fetch");*/
+
+    // hier wird toLearn auf true gesetzt
     Map<String, dynamic> localDecks =
         await LocalStorageService.createMapListMapLocalDecks(
             "pRaCtIcEmOde-$currentDeck");
 
-    debugPrint("localDecks $localDecks");
-    localDecks.forEach((deckName, cards) {
-      for (Map<String, dynamic> card in cards) {
-        Map<String, dynamic> translation = card['translation'];
+    /*fetch = await LocalStorageService.fetchLocalDeck("pRaCtIcEmOde-$currentDeck");
+    debugPrint("before $fetch");*/
 
-        cardsList
-            .add({translation.keys.first: translation.values.first.toString()});
-      }
-    });
+    cardsList = localDecks["pRaCtIcEmOde-$currentDeck"];
+    debugPrint("cardsList $cardsList");
+
+    List<Map<String, dynamic>> filteredCardsList =
+        cardsList.where((element) => element['toLearn'] == true).toList();
+
+    //if all cards are titled with I KNOW, (allSolved)
+    if (cardsList.length > 0 && filteredCardsList.length == 0) {
+      _showCustomPopupDialog(context, true);
+    }
+
+    debugPrint("");
+    debugPrint("filteredCardsList length: ${filteredCardsList.length}");
+    debugPrint("");
 
     setState(() {
-      _savePracticeDeck();
-      userDeck = cardsList;
+      //_savePracticeDeck();
+      userDeck = filteredCardsList;
       debugPrint("list elements ${userDeck.length}");
       currentIndex = 0;
       showFrontSide = true;
@@ -128,147 +120,183 @@ class _PracticePageState extends State<PracticePage> {
     });
   }
 
-  void _moveAndAnimate(int moveToIndex) {
-    if (moveToIndex >= 0 &&
-        moveToIndex < userDeck.length &&
-        moveToIndex != currentIndex) {
-      // Get the current card to move
-      Map<String, String> currentCard = userDeck[currentIndex];
+  Future<void> _showNextCard(bool mustLearn, BuildContext context) async {
+    // user knows the card, switch value toLearn to false
+    Map<String, dynamic> oldCard = userDeck[currentIndex];
 
-      // Remove the card from the current position
-      userDeck.removeAt(currentIndex);
+    Map<String, dynamic> newCard = Map.from(oldCard);
+    if (oldCard.containsKey("toLearn")) {
+      newCard["toLearn"] = mustLearn;
+    }
 
-      // Insert the card at the specified index
-      userDeck.insert(moveToIndex, currentCard);
+    await LocalStorageService.updateCardInDeck(
+        "pRaCtIcEmOde-$currentDeck", oldCard, newCard);
+    /*var fetch = await LocalStorageService.fetchLocalDeck("pRaCtIcEmOde-$currentDeck");
+    debugPrint("update that $fetch");*/
 
-      Future.delayed(Duration(milliseconds: 300), () {
+    if (currentIndex + 1 < userDeck.length) {
+      Future.delayed(Duration(milliseconds: 20), () {
         // Add your animation here if needed
-
+        currentIndex += 1;
         setState(() {
-          _savePracticeDeck();
           pageController.animateToPage(
             currentIndex,
-            duration: Duration(seconds: 1), // Set the desired duration
+            duration: Duration(milliseconds: 400), // Set the desired duration
             curve: Curves.easeInOut,
           );
         });
       });
 
-      debugPrint("SWIPED: $userDeck");
-      // Trigger your swipe left animation here.
-      // You can add your animation code or call your animation function here.
+      debugPrint("current index $currentIndex");
+    } else {
+      // end of list reached
+      debugPrint("ziel erreicht");
+      debugPrint("userDeck all false?: $userDeck");
+      bool allSolved =
+          await LocalStorageService.allSolved("pRaCtIcEmOde-$currentDeck");
+      _showCustomPopupDialog(context, allSolved);
+      // after popup always to position one
+      Future.delayed(Duration(milliseconds: 20), () {
+        // Add your animation here if needed
+        setState(() {
+          pageController.animateToPage(
+            0,
+            duration: Duration(milliseconds: 10), // Set the desired duration
+            curve: Curves.easeInOut,
+          );
+        });
+      });
     }
   }
 
-  // Update _swipeCard method as follows
-  /*void _swipeCard(int delta) {
-    int newIndex = currentIndex + delta;
-    if (newIndex >= 0 && newIndex < userDeck.length) {
-      setState(() {
-        currentIndex = newIndex;
-        pageController.animateToPage(
-          currentIndex,
-          duration: Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
-        showFrontSide = true;
-      });
-    }
-  }*/
-
   @override
   Widget build(BuildContext context) {
+    debugPrint("my current deck order: $userDeck");
+
+    double statusBarHeight = MediaQuery.of(context).padding.top;
     return Scaffold(
       backgroundColor: Colors.grey[300],
       body: Column(
         children: [
+          Container(
+            height: statusBarHeight,
+            color: Colors.red,
+          ),
+          Align(
+            alignment: Alignment.topCenter,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Text(
+                    '${currentIndex + 1} / ${userDeck.length}',
+                    style: TextStyle(
+                      fontSize: 20, // Adjust the font size as needed
+                    ),
+                  )
+                ],
+              ),
+            ),
+          ),
           Expanded(
             child: Center(
-              child: userDeck.isNotEmpty? GestureDetector(
-                onTap: _handleCardTap,
-                child: PageView.builder(
-                  controller: pageController,
-                  itemCount: userDeck.length,
-                  physics: NeverScrollableScrollPhysics(),
-                  itemBuilder: (context, index) {
-                    return Center(
-                      child: Stack(
-                        children: [
-                          AnimatedSwitcher(
-                            duration: Duration(milliseconds: 300),
-                            child: Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: Container(
-                                key: ValueKey<int>(index),
-                                height: MediaQuery.of(context).size.width * 0.4,
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                alignment: Alignment.center,
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16.0),
-                                  child: Text(
-                                    showFrontSide
-                                        ? userDeck[index].keys.first
-                                        : userDeck[index].values.first,
-                                    style: TextStyle(fontSize: 20),
-                                    textAlign: TextAlign.center,
+              child: userDeck.isNotEmpty
+                  ? GestureDetector(
+                      onTap: _handleCardTap,
+                      child: PageView.builder(
+                        controller: pageController,
+                        itemCount: userDeck.length,
+                        physics: NeverScrollableScrollPhysics(),
+                        itemBuilder: (context, index) {
+                          return Center(
+                            child: Stack(
+                              children: [
+                                AnimatedSwitcher(
+                                  duration: Duration(milliseconds: 300),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: Container(
+                                      key: ValueKey<int>(index),
+                                      height:
+                                          MediaQuery.of(context).size.width *
+                                              0.4,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      alignment: Alignment.center,
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(16.0),
+                                        child: Text(
+                                          showFrontSide
+                                              ? userDeck[index]["translation"]
+                                                  .keys
+                                                  .first
+                                              : userDeck[index]["translation"]
+                                                  .values
+                                                  .first
+                                                  .toString(),
+                                          style: TextStyle(fontSize: 20),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            top: 32, // Adjust the top position as needed
-                            right: 32, // Adjust the right position as needed
-                            child: SizedBox(
-                              width: 30,
-                              height: 30,
-                              child: Icon(
-                                Icons.touch_app_rounded,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            bottom: 0,
-                            right: 10,
-                            child: (conjugationResult != null)
-                                ? ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Theme.of(context)
-                                          .primaryColor, // Use the primary color
+                                Positioned(
+                                  top: 32, // Adjust the top position as needed
+                                  right:
+                                      32, // Adjust the right position as needed
+                                  child: SizedBox(
+                                    width: 30,
+                                    height: 30,
+                                    child: Icon(
+                                      Icons.touch_app_rounded,
+                                      color: Colors.grey,
                                     ),
-                                    onPressed: () {
-                                      if (conjugationResult != null) {
-                                        debugPrint(
-                                            "conjugationResult != null ${extractLetters(conjugationResult!["verb"])}");
-                                      } else {
-                                        debugPrint("conjugationResult == null");
-                                      }
+                                  ),
+                                ),
+                                Positioned(
+                                  bottom: 0,
+                                  right: 10,
+                                  child: (conjugationResult != null)
+                                      ? ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Theme.of(context)
+                                                .primaryColor, // Use the primary color
+                                          ),
+                                          onPressed: () {
+                                            if (conjugationResult != null) {
+                                              debugPrint(
+                                                  "conjugationResult != null ${extractLetters(conjugationResult!["verb"])}");
+                                            } else {
+                                              debugPrint(
+                                                  "conjugationResult == null");
+                                            }
 
-                                      Navigator.pushNamed(
-                                        context,
-                                        ConjugationPage.routeName,
-                                        arguments: ConjugationArguments(
-                                          conjugationResult,
-                                        ),
-                                      );
-                                      // Add your button's onPressed functionality here
-                                    },
-                                    child: Text(
-                                        "Conjugate ${extractLetters(conjugationResult!["verb"])}"),
-                                  )
-                                : Container(),
-                          ),
-                        ],
+                                            Navigator.pushNamed(
+                                              context,
+                                              ConjugationPage.routeName,
+                                              arguments: ConjugationArguments(
+                                                conjugationResult,
+                                              ),
+                                            );
+                                            // Add your button's onPressed functionality here
+                                          },
+                                          child: Text(
+                                              "Conjugate ${extractLetters(conjugationResult!["verb"])}"),
+                                        )
+                                      : Container(),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
                       ),
-                    );
-                  },
-                ),
-              ) : Text("Add Cards to Deck first..."),
-            ) ,
+                    )
+                  : Text("Add Cards to Deck first..."),
+            ),
           ),
           // Button Row
           Padding(
@@ -289,7 +317,7 @@ class _PracticePageState extends State<PracticePage> {
                         child: OutlinedButton(
                           onPressed: () {
                             // Handle the button press.
-                            _moveAndAnimate((userDeck.length *0.25).toInt());
+                            _showNextCard(true, context);
                           },
                           style: ButtonStyle(
                             side: MaterialStateProperty.all(BorderSide(
@@ -300,7 +328,7 @@ class _PracticePageState extends State<PracticePage> {
                               Color(0xFFe15055),
                             ), // Font color
                           ),
-                          child: Text('Bad'),
+                          child: Text('I don\'t know'),
                         ),
                       ),
                     ),
@@ -310,27 +338,8 @@ class _PracticePageState extends State<PracticePage> {
                         child: OutlinedButton(
                           onPressed: () {
                             // Handle the button press.
-                            _moveAndAnimate(userDeck.length ~/ 2);
-                          },
-                          style: ButtonStyle(
-                            side: MaterialStateProperty.all(BorderSide(
-                              color: Color(0xfffbcb6e), // Outline color
-                              width: 2.0, // Adjust the width as needed
-                            )),
-                            foregroundColor: MaterialStateProperty.all(
-                                Color(0xfffbcb6e)), // Font color
-                          ),
-                          child: Text('Well'),
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: OutlinedButton(
-                          onPressed: () {
-                            // Handle the button press.
-                            _moveAndAnimate(userDeck.length -1);
+                            _showNextCard(false, context);
+                            //ceck if update worked
                           },
                           style: ButtonStyle(
                             side: MaterialStateProperty.all(BorderSide(
@@ -342,7 +351,7 @@ class _PracticePageState extends State<PracticePage> {
                               Theme.of(context).primaryColor,
                             ), // Font color
                           ),
-                          child: Text('Nice'),
+                          child: Text('I know'),
                         ),
                       ),
                     ),
@@ -353,6 +362,65 @@ class _PracticePageState extends State<PracticePage> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showCustomPopupDialog(BuildContext context, bool allSolved) {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent dismissal by tapping outside
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+          title: Text(
+            'Great job! You finished all your cards.',
+            textAlign: TextAlign.center,
+          ),
+          content: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (!allSolved)
+                ElevatedButton(
+                  onPressed: () async {
+                    // Add your logic for "Review Cards" here
+                    await _fetchStoredData();
+                    Navigator.of(context).pop(); // Close the dialog
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).indicatorColor,  // High emphasis button
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                  ),
+                  child: Text('Review Cards'),
+                ),
+              TextButton(
+                onPressed: () async {
+                  // Add your logic for "Restart Cards" here
+                  await LocalStorageService.setPracticeCardsToLearnTrue(
+                      "pRaCtIcEmOde-$currentDeck");
+                  await _fetchStoredData();
+                  Navigator.of(context).pop(); // Close the dialog
+                },
+                style: TextButton.styleFrom(
+                  textStyle: TextStyle(
+                    color:
+                        Theme.of(context).primaryColor, // Low emphasis button
+                  ),
+                  /*backgroundColor: Theme.of(context).primaryColor, // Custom button color
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),*/
+                ),
+                child: Text('Restart Cards'),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

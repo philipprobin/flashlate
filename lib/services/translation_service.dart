@@ -12,6 +12,7 @@ class TranslationService {
     "Français" : "fr",
     "Polski" : "pl",
     "Português" : "pt",
+    "Italiano" : "it"
   };
 
   Future<String> translateText(String source, String target, String text) async {

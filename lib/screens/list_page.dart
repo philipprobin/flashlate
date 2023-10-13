@@ -106,13 +106,14 @@ class _ListPageState extends State<ListPage> {
     });
     return categoryWidgets;
     */
+    debugPrint("userdeck $userDeck");
     userDeck.forEach((deckName, cards) {
       List<WordTileWidget> wordWidgets = [];
 
       for (Map<String, dynamic> card in cards) {
-        Map<String, dynamic> translation = card['translation'];
+        var translation = card['translation'];
         String word = translation.keys.first;
-        String translationText = translation.values.first.toString();
+        String translationText = translation.values.first;
 
         // Check if the searchTerm is empty or if it exists in either the word or translation
         if (searchTerm.isEmpty ||
@@ -272,7 +273,7 @@ class _ListPageState extends State<ListPage> {
                     } else if (snapshot.hasError) {
                       // If there's an error, display an error message.
                       return Center(
-                        child: Text('Error: ${snapshot.error.toString()}'),
+                        child: Text('Data has Error. ${snapshot.error.toString()}'),
                       );
                     } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                       // If there's no data or the data is empty, show a message.
