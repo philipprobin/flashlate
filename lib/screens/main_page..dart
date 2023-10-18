@@ -39,8 +39,8 @@ class _MainPageState extends State<MainPage> {
     "English",
     "Français",
     "Polski",
-    "Português"
-        "Italiano"
+    "Português",
+    "Italiano"
   ];
   String currentDropdownValue = "";
   String currentTargetValueLang = "Español";

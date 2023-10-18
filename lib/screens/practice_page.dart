@@ -15,8 +15,11 @@ class _PracticePageState extends State<PracticePage> {
   PageController pageController = PageController(initialPage: 0);
   int currentIndex = 0;
   bool showFrontSide = true;
+  int cardsUnknown = 0;
+  int cardsKnown = 0;
   Map<String, dynamic>? conjugationResult;
   String currentDeck = "";
+  bool isReviewMode = false;
 
   @override
   void initState() {
@@ -24,25 +27,22 @@ class _PracticePageState extends State<PracticePage> {
     _fetchStoredData();
   }
 
-/*  Future<void> verbIsShown(String word) async {
-    await showConjugations(word);
-  }
+  Future<void> _setKnownCardsNumbers(int limitIndex) async {
+    var cardsList = await LocalStorageService.fetchLocalDeck(isReviewMode ? "rEvIeWDeCk-$currentDeck" : "pRaCtIcEmOde-$currentDeck");
+    int trueCount = 0;
+    int falseCount = 0;
 
-  Future<bool> showConjugations(String translatedText) async {
-    debugPrint("showConjugations triggerd");
-    Map<String, dynamic>? conjugations =
-        await CloudFunctionService.fetchSpanishConjugations(translatedText);
-    if (conjugations != null) {
-      debugPrint(conjugations.toString());
-      setState(() {
-        conjugationResult = conjugations;
-      });
-
-      return true;
-    } else {
-      return false;
+    for (int i = 0; i < limitIndex; i++) {
+      bool toLearnValue = cardsList[i]["toLearn"];
+      if (toLearnValue == true) {
+        trueCount++;
+      } else if (toLearnValue == false) {
+        falseCount++;
+      }
     }
-  }*/
+    cardsUnknown = trueCount;
+    cardsKnown = falseCount;
+  }
 
   String extractLetters(String input) {
     // Define a regular expression to match letters
@@ -64,52 +64,35 @@ class _PracticePageState extends State<PracticePage> {
     // Map<String,dynamic> localDecks = await LocalStorageService.createMapListMapLocalDecks("");
 
     currentDeck = await LocalStorageService.getCurrentDeck();
+    isReviewMode =
+        await LocalStorageService.getReviewMode("rEvIeWmOde-$currentDeck");
+    int fetchedIndex = await LocalStorageService.getIndex("iNdEx-$currentDeck");
 
     List<Map<String, dynamic>> cardsList = [];
 
-    //await LocalStorageService.deleteDeck("pRaCtIcEmOde-$currentDeck");
-    bool practiceDeckIsEmpty =
-        await LocalStorageService.checkDeckIsEmpty("pRaCtIcEmOde-$currentDeck");
+    // get List<Map> with translate and toLearn, create if not exist
+    cardsList = await LocalStorageService.createCardsDeck(currentDeck);
 
-    debugPrint("practiceDeckIsEmpty: $practiceDeckIsEmpty");
-
-    if (practiceDeckIsEmpty) {
-      // toLearn doesnt exist yet
-      bool res = await LocalStorageService.copyDeckToPracticeMode(currentDeck);
-      debugPrint("copyDeckToPracticeMode $res");
+    if (isReviewMode) {
+      cardsList =
+          await LocalStorageService.fetchLocalDeck("rEvIeWDeCk-$currentDeck");
     }
 
-    /*var fetch = await LocalStorageService.fetchLocalDeck("pRaCtIcEmOde-$currentDeck");
-    debugPrint("before $fetch");*/
-
-    // hier wird toLearn auf true gesetzt
-    Map<String, dynamic> localDecks =
-        await LocalStorageService.createMapListMapLocalDecks(
-            "pRaCtIcEmOde-$currentDeck");
-
-    /*fetch = await LocalStorageService.fetchLocalDeck("pRaCtIcEmOde-$currentDeck");
-    debugPrint("before $fetch");*/
-
-    cardsList = localDecks["pRaCtIcEmOde-$currentDeck"];
     debugPrint("cardsList $cardsList");
 
-    List<Map<String, dynamic>> filteredCardsList =
-        cardsList.where((element) => element['toLearn'] == true).toList();
-
-    //if all cards are titled with I KNOW, (allSolved)
-    if (cardsList.length > 0 && filteredCardsList.length == 0) {
+    // check if all already solved:  all cards are titled with I KNOW, (allSolved)
+    bool allSolved = await LocalStorageService.allSolved(
+        isReviewMode ? "rEvIeWDeCk-$currentDeck" : "pRaCtIcEmOde-$currentDeck");
+    if (cardsList.length > 0 && allSolved) {
       _showCustomPopupDialog(context, true);
     }
 
-    debugPrint("");
-    debugPrint("filteredCardsList length: ${filteredCardsList.length}");
-    debugPrint("");
-
     setState(() {
-      //_savePracticeDeck();
-      userDeck = filteredCardsList;
+      pageController = PageController(initialPage: fetchedIndex);
+      userDeck = cardsList;
       debugPrint("list elements ${userDeck.length}");
-      currentIndex = 0;
+      currentIndex = fetchedIndex;
+      _setKnownCardsNumbers(currentIndex);
       showFrontSide = true;
     });
   }
@@ -130,14 +113,21 @@ class _PracticePageState extends State<PracticePage> {
     }
 
     await LocalStorageService.updateCardInDeck(
-        "pRaCtIcEmOde-$currentDeck", oldCard, newCard);
-    /*var fetch = await LocalStorageService.fetchLocalDeck("pRaCtIcEmOde-$currentDeck");
-    debugPrint("update that $fetch");*/
+        isReviewMode ? "rEvIeWDeCk-$currentDeck" : "pRaCtIcEmOde-$currentDeck",
+        oldCard,
+        newCard);
+
+    // to show updated knownCards for the last rating
+    setState(() {
+      _setKnownCardsNumbers(currentIndex+1);
+
+    });
 
     if (currentIndex + 1 < userDeck.length) {
-      Future.delayed(Duration(milliseconds: 20), () {
+      Future.delayed(Duration(milliseconds: 20), () async {
         // Add your animation here if needed
-        currentIndex += 1;
+        await LocalStorageService.setIndex(
+            "iNdEx-$currentDeck", currentIndex += 1);
         setState(() {
           pageController.animateToPage(
             currentIndex,
@@ -152,8 +142,13 @@ class _PracticePageState extends State<PracticePage> {
       // end of list reached
       debugPrint("ziel erreicht");
       debugPrint("userDeck all false?: $userDeck");
-      bool allSolved =
-          await LocalStorageService.allSolved("pRaCtIcEmOde-$currentDeck");
+      bool allSolved = await LocalStorageService.allSolved(isReviewMode
+          ? "rEvIeWDeCk-$currentDeck"
+          : "pRaCtIcEmOde-$currentDeck");
+      // only for showing how last card is rated
+      /*setState(() {
+        _setKnownCardsValues();
+      });*/
       _showCustomPopupDialog(context, allSolved);
       // after popup always to position one
       Future.delayed(Duration(milliseconds: 20), () {
@@ -185,17 +180,67 @@ class _PracticePageState extends State<PracticePage> {
           Align(
             alignment: Alignment.topCenter,
             child: Padding(
-              padding: const EdgeInsets.only(top: 16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Text(
-                    '${currentIndex + 1} / ${userDeck.length}',
-                    style: TextStyle(
-                      fontSize: 20, // Adjust the font size as needed
-                    ),
-                  )
-                ],
+              padding: const EdgeInsets.only(top: 16.0, left: 16, right: 16),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Container(
+                        width: 30,
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: Colors.red,
+                            width: 1.0,
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Align(
+                          alignment: Alignment.center, // Center the text both horizontally and vertically
+                          child: Text(
+                            cardsUnknown.toString(),
+                            style: TextStyle(
+                              fontSize: 20,
+                              color: Colors.red,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      Text(
+                        '${currentIndex + 1} / ${userDeck.length}',
+                        style: TextStyle(
+                          fontSize: 20, // Adjust the font size as needed
+                        ),
+                      ),
+                      Container(
+                        width: 30,
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: Theme.of(context).primaryColor,
+                            width: 1.0,
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Align(
+                          alignment: Alignment.center, // Center the text both horizontally and vertically
+                          child: Text(
+                            cardsKnown.toString(),
+                            style: TextStyle(
+                              fontSize: 20,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
@@ -386,11 +431,34 @@ class _PracticePageState extends State<PracticePage> {
                 ElevatedButton(
                   onPressed: () async {
                     // Add your logic for "Review Cards" here
+                    await LocalStorageService.setIndex("iNdEx-$currentDeck", 0);
+
+                    bool isReviewMode = await LocalStorageService.getReviewMode(
+                        "rEvIeWmOde-$currentDeck");
+                    if (!isReviewMode) {
+                      // old reviewDeck gets overwritten, after Falses get deleted
+                      // if comes from practice deck, values can be copied to review deck and then deleted
+                      await LocalStorageService.copyDeck(
+                          "pRaCtIcEmOde-$currentDeck",
+                          "rEvIeWDeCk-$currentDeck");
+                    }
+
+                    await LocalStorageService.deleteToLearnFalses(
+                        "rEvIeWDeCk-$currentDeck");
+
+                    var rEvIeWDeCk = await LocalStorageService.fetchLocalDeck(
+                        "rEvIeWDeCk-$currentDeck");
+                    debugPrint("rEvIeWDeCk are falses gone?: $rEvIeWDeCk");
+
+                    await LocalStorageService.setReviewMode(
+                        "rEvIeWmOde-$currentDeck", true);
+
                     await _fetchStoredData();
                     Navigator.of(context).pop(); // Close the dialog
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).indicatorColor,  // High emphasis button
+                    backgroundColor: Theme.of(context)
+                        .indicatorColor, // High emphasis button
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8.0),
                     ),
@@ -402,6 +470,10 @@ class _PracticePageState extends State<PracticePage> {
                   // Add your logic for "Restart Cards" here
                   await LocalStorageService.setPracticeCardsToLearnTrue(
                       "pRaCtIcEmOde-$currentDeck");
+                  await LocalStorageService.setIndex("iNdEx-$currentDeck", 0);
+                  await LocalStorageService.setReviewMode(
+                      "rEvIeWmOde-$currentDeck", false);
+
                   await _fetchStoredData();
                   Navigator.of(context).pop(); // Close the dialog
                 },
@@ -410,10 +482,6 @@ class _PracticePageState extends State<PracticePage> {
                     color:
                         Theme.of(context).primaryColor, // Low emphasis button
                   ),
-                  /*backgroundColor: Theme.of(context).primaryColor, // Custom button color
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),*/
                 ),
                 child: Text('Restart Cards'),
               ),
