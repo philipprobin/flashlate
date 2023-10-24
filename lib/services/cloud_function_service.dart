@@ -22,6 +22,7 @@ class CloudFunctionService {
         // You can use the `path_provider` package to manage file I/O.
 
         // Print the JSON result
+        print("jsonresult $jsonResult");
         return jsonResult;
       } else {
         // Handle HTTP error

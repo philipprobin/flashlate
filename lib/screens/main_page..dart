@@ -33,6 +33,8 @@ class _MainPageState extends State<MainPage> {
 
   List<Map<String, String>> storedData = [];
   List<String> dropdownItems = [];
+  List<String> oldTargetWordList = [];
+  List<Map<String, dynamic>> verbDictsInTargetText = [];
   List<String> langDropDownItems = [
     "Deutsch",
     "Español",
@@ -121,47 +123,78 @@ class _MainPageState extends State<MainPage> {
     final translation = await translationService.translateText(
         sourceLang, targetLang, sourceText);
     if (currentTargetValueLang == "Español") {
+      // input in source, translation is forwarded
       showSpanishConjugations(translation);
     }
     setState(() {
       targetText = translation;
       targetTextEditingController.text = targetText;
-
-      debugPrint('Translated Text: $targetText');
     });
   }
 
-  String extractLetters(String input) {
-    // Define a regular expression to match letters
-    final RegExp regex = RegExp(r'\D+');
+  List<String> findAndReplaceWords(List<String> currentTranslatedTextList) {
+    List<String> newWords = [];
 
-    // Use the RegExp pattern to find all matches in the input string
-    Iterable<Match> matches = regex.allMatches(input);
+    for (String word in currentTranslatedTextList) {
+      if (!oldTargetWordList.contains(word)) {
+        newWords.add(word);
+      }
+    }
 
-    // Join the matched letters to form a new string
-    String result = matches.map((match) => match.group(0)!).join('');
+    // Replace oldTargetWordList with currentTranslatedTextList
+    oldTargetWordList = List.from(currentTranslatedTextList);
 
-    return result;
+    return newWords;
   }
 
   Future<bool> showSpanishConjugations(String translatedText) async {
-    debugPrint("showConjugations triggered");
-    Map<String, dynamic>? conjugations =
-        await CloudFunctionService.fetchSpanishConjugations(
-            translatedText, currentSourceValueLang);
+    /*List<String> oldTargetWordList = [];
+    List<Map<String, dynamic>> verbDictsInTargetText = [];*/
 
-    if (conjugations != null) {
-      if (originalVerb != conjugations["original_verb"]) {
-        setState(() {
-          conjugationResult = conjugations;
-          originalVerb = conjugations["original_verb"];
-        });
+    // preprocess translatedText
+    List<String> currentTranslatedTextList = translatedText.split(" ");
+    for (int i = 0; i < currentTranslatedTextList.length; i++) {
+      currentTranslatedTextList[i] =
+          currentTranslatedTextList[i].replaceAll(RegExp(r'[.,!?]'), '');
+    }
+    debugPrint("currentTranslatedTextList: $currentTranslatedTextList");
+
+    // delete verbs from verbList that are not in translatedText anymore
+    if (verbDictsInTargetText.isNotEmpty) {
+      for (Map<String, dynamic> verbDict in verbDictsInTargetText) {
+        String verb = verbDict["input"];
+        if (!currentTranslatedTextList.contains(verb)) {
+          verbDictsInTargetText.remove(verbDict);
+        }
       }
+    }
 
-      debugPrint(conjugations.toString());
+    // query only new words
+    List<String> newWords = findAndReplaceWords(currentTranslatedTextList);
+    for (String word in newWords) {
+      Map<String, dynamic>? conjugations =
+          await DatabaseService.queryVerbES(word);
+      if (conjugations != null) {
+        if (conjugations.isNotEmpty) {
+          debugPrint("conjugations found: ${conjugations["infinitive"]}");
+          verbDictsInTargetText.add(conjugations);
+        }
+      }
+    }
+    // look in firebase
+/*        await CloudFunctionService.fetchSpanishConjugations(
+            translatedText, currentSourceValueLang);*/
 
+    if (verbDictsInTargetText.isNotEmpty) {
+      debugPrint("verbDictsInTargetText: $verbDictsInTargetText");
+      setState(() {
+        conjugationResult = verbDictsInTargetText.last;
+      });
       return true;
     } else {
+      setState(() {
+        conjugationResult = null;
+      });
       return false;
     }
   }
@@ -450,8 +483,10 @@ class _MainPageState extends State<MainPage> {
                                     // only add if not empty -> if empty gets copied later
                                     if (!practiceDeckIsEmpty) {
                                       LocalStorageService.addCardToLocalDeck(
-                                          "pRaCtIcEmOde-$deckName",
-                                          {source: target});
+                                          "pRaCtIcEmOde-$deckName", {
+                                        "translation": {source: target},
+                                        "toLearn": true
+                                      });
                                     }
 
                                     // upload
@@ -562,7 +597,6 @@ class _MainPageState extends State<MainPage> {
                                     child: TextFormField(
                                       maxLines: 2,
                                       onChanged: (value) {
-
                                         if (!editingMode) {
                                           setState(() {
                                             sourceText = value;
@@ -632,37 +666,32 @@ class _MainPageState extends State<MainPage> {
                                   bottom: 0,
                                   right: 10,
                                   child: (conjugationResult != null)
-                                      ? (targetTextEditingController.text
-                                              .contains(originalVerb))
-                                          ? ElevatedButton(
-                                              style: ElevatedButton.styleFrom(
-                                                  backgroundColor: Theme.of(
-                                                          context)
-                                                      .indicatorColor // Use the primary color
-                                                  ),
-                                              onPressed: () {
-                                                if (conjugationResult != null) {
-                                                  debugPrint(
-                                                      "conjugationResult != null ${extractLetters(conjugationResult!["verb"])}");
-                                                } else {
-                                                  debugPrint(
-                                                      "conjugationResult == null");
-                                                }
+                                      ? ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                              backgroundColor: Theme.of(context)
+                                                  .indicatorColor // Use the primary color
+                                              ),
+                                          onPressed: () {
+                                            if (conjugationResult != null) {
+                                              debugPrint(
+                                                  "conjugationResult != null ${conjugationResult!["infinitive"]}");
+                                            } else {
+                                              debugPrint(
+                                                  "conjugationResult == null");
+                                            }
 
-                                                Navigator.pushNamed(
-                                                  context,
-                                                  ConjugationPage.routeName,
-                                                  arguments:
-                                                      ConjugationArguments(
-                                                    conjugationResult,
-                                                  ),
-                                                );
-                                                // Add your button's onPressed functionality here
-                                              },
-                                              child: Text(
-                                                  "Conjugate ${extractLetters(conjugationResult!["verb"])}"),
-                                            )
-                                          : Container()
+                                            Navigator.pushNamed(
+                                              context,
+                                              ConjugationPage.routeName,
+                                              arguments: ConjugationArguments(
+                                                conjugationResult,
+                                              ),
+                                            );
+                                            // Add your button's onPressed functionality here
+                                          },
+                                          child: Text(
+                                              "Conjugate ${conjugationResult!["infinitive"]}"),
+                                        )
                                       : Container(),
                                 ),
                               ],

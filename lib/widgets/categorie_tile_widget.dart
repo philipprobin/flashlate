@@ -77,14 +77,10 @@ class _CategoryTileState extends State<CategoryTileWidget> {
     setState(() {
       _currentWords.remove(wordWidget);
     });
-    bool localResult = await LocalStorageService.deleteCardFromLocalDeck(
+    await LocalStorageService.deleteCardFromLocalDecks(
         widget.categoryName, {wordWidget.word: wordWidget.translation});
-    debugPrint("local removal successfull $localResult");
-    bool localPracticeResult =
-        await LocalStorageService.deleteCardFromLocalDeck(
-            "pRaCtIcEmOde-${widget.categoryName}",
-            {wordWidget.word: wordWidget.translation});
-    debugPrint("local Practice removal successfull $localPracticeResult");
+
+
     bool dbResult = await DatabaseService.deleteCard(
         widget.categoryName, {wordWidget.word: wordWidget.translation});
     debugPrint("database removal successfull $dbResult");

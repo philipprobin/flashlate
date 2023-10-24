@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/database_service.dart';
 import '../services/local_storage_service.dart';
+import '../widgets/number_container_widget.dart';
 import 'conjugation_page.dart';
 import 'main_page..dart';
 
@@ -44,18 +45,6 @@ class _PracticePageState extends State<PracticePage> {
     cardsKnown = falseCount;
   }
 
-  String extractLetters(String input) {
-    // Define a regular expression to match letters
-    final RegExp regex = RegExp(r'\D+');
-
-    // Use the RegExp pattern to find all matches in the input string
-    Iterable<Match> matches = regex.allMatches(input);
-
-    // Join the matched letters to form a new string
-    String result = matches.map((match) => match.group(0)!).join('');
-
-    return result;
-  }
 
   Future<void> _fetchStoredData() async {
     // download
@@ -69,14 +58,15 @@ class _PracticePageState extends State<PracticePage> {
     int fetchedIndex = await LocalStorageService.getIndex("iNdEx-$currentDeck");
 
     List<Map<String, dynamic>> cardsList = [];
-
+    debugPrint("isReviewMode: $isReviewMode");
     // get List<Map> with translate and toLearn, create if not exist
-    cardsList = await LocalStorageService.createCardsDeck(currentDeck);
+    cardsList = await LocalStorageService.getPracticeDeck(currentDeck);
 
     if (isReviewMode) {
       cardsList =
           await LocalStorageService.fetchLocalDeck("rEvIeWDeCk-$currentDeck");
     }
+
 
     debugPrint("cardsList $cardsList");
 
@@ -88,6 +78,9 @@ class _PracticePageState extends State<PracticePage> {
     }
 
     setState(() {
+      if(fetchedIndex <0){
+        fetchedIndex = 0;
+      }
       pageController = PageController(initialPage: fetchedIndex);
       userDeck = cardsList;
       debugPrint("list elements ${userDeck.length}");
@@ -191,52 +184,19 @@ class _PracticePageState extends State<PracticePage> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: <Widget>[
-                      Container(
-                        width: 30,
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: Colors.red,
-                            width: 1.0,
-                          ),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Align(
-                          alignment: Alignment.center, // Center the text both horizontally and vertically
-                          child: Text(
-                            cardsUnknown.toString(),
-                            style: TextStyle(
-                              fontSize: 20,
-                              color: Colors.red,
-                            ),
-                          ),
-                        ),
+                      NumberContainer(
+                        color: Colors.red,   // Both border and text color
+                        numberValue: cardsUnknown,
                       ),
-
                       Text(
                         '${currentIndex + 1} / ${userDeck.length}',
                         style: TextStyle(
                           fontSize: 20, // Adjust the font size as needed
                         ),
                       ),
-                      Container(
-                        width: 30,
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: Theme.of(context).primaryColor,
-                            width: 1.0,
-                          ),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Align(
-                          alignment: Alignment.center, // Center the text both horizontally and vertically
-                          child: Text(
-                            cardsKnown.toString(),
-                            style: TextStyle(
-                              fontSize: 20,
-                              color: Theme.of(context).primaryColor,
-                            ),
-                          ),
-                        ),
+                      NumberContainer(
+                        color: Theme.of(context).primaryColor,   // Both border and text color
+                        numberValue: cardsKnown,
                       ),
                     ],
                   ),
@@ -312,13 +272,6 @@ class _PracticePageState extends State<PracticePage> {
                                                 .primaryColor, // Use the primary color
                                           ),
                                           onPressed: () {
-                                            if (conjugationResult != null) {
-                                              debugPrint(
-                                                  "conjugationResult != null ${extractLetters(conjugationResult!["verb"])}");
-                                            } else {
-                                              debugPrint(
-                                                  "conjugationResult == null");
-                                            }
 
                                             Navigator.pushNamed(
                                               context,
@@ -330,7 +283,7 @@ class _PracticePageState extends State<PracticePage> {
                                             // Add your button's onPressed functionality here
                                           },
                                           child: Text(
-                                              "Conjugate ${extractLetters(conjugationResult!["verb"])}"),
+                                              "Conjugate ..."),
                                         )
                                       : Container(),
                                 ),

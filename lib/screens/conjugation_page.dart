@@ -51,34 +51,44 @@ class ConjugationPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              extractLetters(capitalizeFirstLetter(args.verbConjugations?["verb"])),
+              extractLetters(
+                  capitalizeFirstLetter(args.verbConjugations?["infinitive"])),
               style: TextStyle(
                 fontSize: 36,
                 fontWeight: FontWeight.w700,
               ),
             ),
             Text(
-              args.verbConjugations?["translations"],
+              args.verbConjugations?["translations"] ?? "",
               style: TextStyle(
-                fontSize: 18,
-                fontStyle: FontStyle.italic,
-                fontWeight: FontWeight.w100,
-                color: Colors.grey[600]
-              ),
+                  fontSize: 18,
+                  fontStyle: FontStyle.italic,
+                  fontWeight: FontWeight.w100,
+                  color: Colors.grey[600]),
             ),
             Container(
               height: 16,
             ),
-            _buildConjugationList("Presente",
-                args.verbConjugations?["indicativo"]["Presente"]),
-            _buildConjugationList("Imperfecto",
-                args.verbConjugations?["indicativo"]["Imperfecto"]),
-            _buildConjugationList("Pretérito",
-                args.verbConjugations?["indicativo"]["Pretérito"]),
             _buildConjugationList(
-                "Futuro", args.verbConjugations?["indicativo"]["Futuro"]),
+                "Presente", args.verbConjugations?["conjugations"]["presente"]),
+            _buildConjugationList("Imperfecto",
+                args.verbConjugations?["conjugations"]["imperfecto"]),
+            _buildConjugationList(
+                "Indefinido", args.verbConjugations?["conjugations"]["indefinido"]),
+            _buildConjugationList(
+                "Futuro", args.verbConjugations?["conjugations"]["futuro"]),
             _buildConjugationList("Conditional",
-                args.verbConjugations?["indicativo"]["Condicional"]),
+                args.verbConjugations?["conjugations"]["condicional"]),
+            _buildConjugationList("Perfecto",
+                args.verbConjugations?["conjugations"]["perfecto"]),
+            _buildConjugationList("Pluscuamperfecto",
+                args.verbConjugations?["conjugations"]["pluscuamperfecto"]),
+            _buildConjugationList("Subjuntivo Presente",
+                args.verbConjugations?["conjugations"]["subjuntivo_presente"]),
+            _buildConjugationList("Imperativo Afirmativo",
+                args.verbConjugations?["conjugations"]["imperativo_afirmativo"]),
+            _buildConjugationList("Imperativo Negativo",
+                args.verbConjugations?["conjugations"]["imperativo_negativo"]),
           ],
         ),
       ),
@@ -99,13 +109,21 @@ class ConjugationPage extends StatelessWidget {
       'ellos/ellas/Uds.'
     ]; // Define your custom order
 
+    // convert keys
+    conjugations['tú'] = conjugations.remove('tu');
+    conjugations['él/ella/Ud.'] = conjugations.remove('el_ella_Ud');
+    conjugations['ellos/ellas/Uds.'] = conjugations.remove('ellos_ellas_Uds');
+
+
+
     TextStyle textStyle = TextStyle(
         fontSize: 16,
         color: Colors.grey,
         fontWeight: FontWeight.w500); // Define the text style for values
 
-    customOrder.forEach((key) {
-      if (conjugations.containsKey(key)) {
+    customOrder.forEach((pronoun) {
+      // presente = {yo: amo, tu : amas}
+      if (conjugations.containsKey(pronoun)) {
         conjugationRows.add(
           Container(
             // Alternate row background color
@@ -115,7 +133,7 @@ class ConjugationPage extends StatelessWidget {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 4.0),
                     child: Text(
-                      key,
+                      pronoun,
                       style: textStyle,
                     ),
                   ),
@@ -125,7 +143,8 @@ class ConjugationPage extends StatelessWidget {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 4.0),
                     child: Text(
-                      conjugations[key].toString(),
+                      // value (conjugation)
+                      conjugations[pronoun].toString(),
                       style: textStyle, // Apply the text style
                     ),
                   ),
@@ -146,10 +165,7 @@ class ConjugationPage extends StatelessWidget {
             child: Row(
               children: [
                 Expanded(
-                  child: Text(
-                    key,
-                    style: textStyle
-                  ),
+                  child: Text(key, style: textStyle),
                 ), // Left column
                 SizedBox(width: 16.0), // Spacer
                 Expanded(
@@ -188,7 +204,9 @@ class ConjugationPage extends StatelessWidget {
             ),
           ),
         ),
-        Container(height: 16,)
+        Container(
+          height: 16,
+        )
       ],
     );
   }

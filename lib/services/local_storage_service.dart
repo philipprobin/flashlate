@@ -42,19 +42,27 @@ class LocalStorageService {
         // only current is in list
         prefs.getString(_currentDeckKey) == null;
       } else {
-        await deleteDeckRefs(deckName);
+        await deleteAllDeckRefs(deckName);
         List<String> allDeckNames = await LocalStorageService.getDeckNames();
         LocalStorageService.setCurrentDeck(allDeckNames[0]);
         return;
       }
     }
-    await deleteDeckRefs(deckName);
+    await deleteAllDeckRefs(deckName);
   }
 
-  static Future<void> deleteDeckRefs(String deckName) async {
+  static Future<void> deleteAllDeckRefs(String deckName) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     // remove all Cards
     await prefs.remove(deckName);
+    // remove review deck if exists
+    await prefs.remove("rEvIeWdEcK-$deckName");
+    // remove review mode if exists
+    await prefs.remove("rEvIeWmOde-$deckName");
+    // remove index deck if exists
+    await prefs.remove("iNdEx-$deckName");
+    // remove practice deck if exists
+    await prefs.remove("pRaCtIcEmOde-$deckName");
 
     // remove name from deckList
     // Retrieve the existing deck names from shared preferences
@@ -149,54 +157,81 @@ class LocalStorageService {
     }
   }
 
-  static Future<bool> deleteCardFromLocalDeck(
-      String listName, Map<String, dynamic> dict) async {
+  static Future<void> deleteCardFromLocalDecks(
+      String deckName, Map<String, dynamic> dict) async {
+
+
+    List<String> listsToDelete = [deckName, "pRaCtIcEmOde-$deckName","rEvIeWDeCk-$deckName"];
+
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    // Check if the SharedPreferences entry with the listName exists
-    if (!prefs.containsKey(listName)) {
-      return false; // The deck doesn't exist, so nothing to delete
-    }
+    int currentIndex = await LocalStorageService.getIndex("iNdEx-$deckName");
+    bool isReviewMode = await LocalStorageService.getReviewMode("rEvIeWmOde-$deckName");
 
-    // Retrieve the existing deck from shared preferences
-    List<String>? encodedDeck = prefs.getStringList(listName);
-    List<Map<String, dynamic>> deck = [];
-
-    // Copy to List
-    if (encodedDeck != null) {
-      for (String encodedDict in encodedDeck) {
-        Map<String, dynamic> decodedDict = json.decode(encodedDict);
-        deck.add(decodedDict);
-      }
-    }
-
-    // Check if the dictionary exists in the deck
-    int indexToDelete = -1;
-
-    for (int i = 0; i < deck.length; i++) {
-      if (deck[i].toString() == dict.toString()) {
-        indexToDelete = i;
-        break;
-      }
-    }
-
-    if (indexToDelete != -1) {
-      // Dictionary found, delete it
-      deck.removeAt(indexToDelete);
-
-      // Save the updated deck to shared preferences
-      List<String> encodedUpdatedDeck = [];
-
-      for (Map<String, dynamic> deckDict in deck) {
-        String encodedDict = json.encode(deckDict);
-        encodedUpdatedDeck.add(encodedDict);
+    for(String listName in listsToDelete){
+      // Check if the SharedPreferences entry with the listName exists
+      if (!prefs.containsKey(listName)) {
+        continue; // The deck doesn't exist, so nothing to delete
       }
 
-      await prefs.setStringList(listName, encodedUpdatedDeck);
-      return true;
-    } else {
-      // Dictionary doesn't exist in the deck
-      return false;
+      // Retrieve the existing deck from shared preferences
+      List<String>? encodedDeck = prefs.getStringList(listName);
+      List<Map<String, dynamic>> deck = [];
+
+      // Copy to List
+      if (encodedDeck != null) {
+        for (String encodedDict in encodedDeck) {
+          Map<String, dynamic> decodedDict = json.decode(encodedDict);
+          deck.add(decodedDict);
+        }
+      }
+
+      // Check if the dictionary exists in the deck
+      int indexToDelete = -1;
+
+      for (int i = 0; i < deck.length; i++) {
+        // debugPrint("Modus: $listName ${deck[i].toString()} == ${dict.toString()} || ${deck[i]["translation"].toString()} == ${dict.toString()}");
+        if (deck[i].toString() == dict.toString() || deck[i]["translation"].toString() == dict.toString()) {
+          indexToDelete = i;
+          debugPrint("word deleted in mode $listName");
+          break;
+        }
+      }
+
+      // check if which index in which mode (review or not) change index if indexToDelete is <= current index
+      // what happens if card is at last place or only card
+
+      // reset current index for practice page
+      if (listName.contains("rEvIeWDeCk") && isReviewMode ) {
+        if (indexToDelete  <= currentIndex){
+          //what happends if only one in deck?
+          await LocalStorageService.setIndex("iNdEx-$deckName", currentIndex-1 );
+        }
+      }
+      if (listName.contains("pRaCtIcEmOde") && !isReviewMode ) {
+        if (indexToDelete  <= currentIndex){
+          //what happends if only one in deck?
+          await LocalStorageService.setIndex("iNdEx-$deckName", currentIndex-1 );
+        }
+      }
+
+      if (indexToDelete != -1) {
+        // Dictionary found, delete it
+        deck.removeAt(indexToDelete);
+
+        // Save the updated deck to shared preferences
+        List<String> encodedUpdatedDeck = [];
+
+        for (Map<String, dynamic> deckDict in deck) {
+          String encodedDict = json.encode(deckDict);
+          encodedUpdatedDeck.add(encodedDict);
+        }
+
+        await prefs.setStringList(listName, encodedUpdatedDeck);
+      } else {
+        // Dictionary doesn't exist in the deck
+        debugPrint("card to delete doesnt exit");
+      }
     }
   }
 
@@ -461,7 +496,7 @@ class LocalStorageService {
     await prefs.setStringList(deckName, updatedEncodedDeck);
   }
 
-  static Future<List<Map<String, dynamic>>> createCardsDeck(String deckName) async {
+  static Future<List<Map<String, dynamic>>> getPracticeDeck(String deckName) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     // Define the keys for the original deck and practice mode deck.
     final String originalDeckKey = deckName;
@@ -469,9 +504,9 @@ class LocalStorageService {
 
     // Check if the practice mode deck already exists.
     bool practiceModeDeckExists = prefs.containsKey(practiceModeDeckKey);
-
+    bool practiceDeckIsEmpty = await LocalStorageService.checkDeckIsEmpty(practiceModeDeckKey);
     // If it doesn't exist, create it by copying the original deck.
-    if (!practiceModeDeckExists) {
+    if (!practiceModeDeckExists || practiceDeckIsEmpty) {
       // Retrieve the original deck from shared preferences.
       final List<String>? originalDeckJsonList = prefs.getStringList(originalDeckKey);
 

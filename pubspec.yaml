@@ -99,6 +99,7 @@ flutter:
     - assets/home.svg
     - assets/list.svg
     - assets/brain.svg
+    - assets/grammar_rules/
 
   fonts:
     - family: AvertaStd

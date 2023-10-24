@@ -1,6 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:flutter/services.dart';
 
 class DatabaseService {
   static Future<DocumentReference<Map<String, dynamic>>?>
@@ -165,6 +169,99 @@ class DatabaseService {
     } else {
       debugPrint("Translation not found in the deck");
       return false;
+    }
+  }
+
+  static void addVerbToDB(String verb, Map verbConjugations) {
+    final CollectionReference verbsCollection =
+        FirebaseFirestore.instance.collection('esVerbs');
+
+    // Create a document reference for the verb in the Firestore collection.
+    final DocumentReference verbDocRef = verbsCollection.doc(verb);
+
+    // Upload the verb conjugations map to Firestore.
+    verbDocRef.set({
+      'conjugations': verbConjugations,
+    }).then((_) {
+      print('Verb data added to Firestore for $verb');
+    }).catchError((error) {
+      print('Error uploading data: $error');
+    });
+  }
+
+  static Future<Map<String, dynamic>?> queryVerbES(String conjToFind) async {
+    // Initialize Firebase with your service account credentials
+    debugPrint("conjToFind --$conjToFind--");
+
+    final CollectionReference collectionRef =
+    FirebaseFirestore.instance.collection('verbsES');
+
+    final List<String> filterList = await generateFilters(conjToFind);
+
+    // Search by filters
+    for (final filterString in filterList) {
+      final querySnapshot = await collectionRef.where(filterString, isEqualTo: conjToFind).get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        final doc = querySnapshot.docs.first;
+        final data = doc.data() as Map<String, dynamic>;
+
+        return {
+          "infinitive": doc.id,
+          "path": filterString,
+          "input": conjToFind,
+          "conjugations": data,
+        };
+      }
+    }
+
+    // Look for infinitive
+    final verbSuffixesEs = ['ar', 'er', 'ir'];
+
+    for (final suffix in verbSuffixesEs) {
+      if (conjToFind.endsWith(suffix)) {
+        final doc = await collectionRef.doc(conjToFind).get();
+
+        if (doc.exists) {
+          final data = doc.data() as Map<String, dynamic>;
+
+          return {
+            "infinitive": doc.id,
+            "input": conjToFind,
+            "conjugations": data,
+          };
+        }
+      }
+    }
+
+    return null;
+  }
+
+
+  static Future<List<String>> generateFilters(String conjToFind) async {
+    var filters = <String>[];
+    Map<String, dynamic> grammaticalRules =
+        await loadJsonFile("assets/grammar_rules/grammatical_rules_es.json");
+
+    grammaticalRules.forEach((key, value) {
+      if (conjToFind.endsWith(key)) {
+        if (value is List<dynamic>) {
+          filters.addAll(value.map((item) => item.toString()));
+        }
+      }
+    });
+
+    return filters;
+  }
+
+  static Future<Map<String, dynamic>> loadJsonFile(String assetPath) async {
+    try {
+      final String jsonContent = await rootBundle.loadString(assetPath);
+      final Map<String, dynamic> jsonData = json.decode(jsonContent);
+      return jsonData;
+    } catch (e) {
+      print('Error loading JSON file: $e');
+      return {};
     }
   }
 }

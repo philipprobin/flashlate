@@ -1,4 +1,9 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:puppeteer/puppeteer.dart' as pup;
+
+final lang = "deutsch/";
+final filePath = 'lib/deutschVerbs.txt'; // Provide the correct file path
 
 void main() async {
   // Launch the Puppeteer browser.
@@ -8,37 +13,126 @@ void main() async {
   final page = await browser.newPage();
 
   // Navigate to the URL.
-  final half_url = 'https://konjugator.reverso.net/konjugation-spanisch-verb-';
-  final verb = 'volver';
-  final end = '.html';
+  final lines = await readLinesFromFile(filePath);
 
-  print(half_url + verb + end);
+  final half_url = 'https://de.pons.com/verbtabellen/';
 
-  await page.goto(half_url + verb + end);
+  //var lines = ["haben", "gehen"];
+  // final verb = 'volver';
+  List<String> timeForms = supportedTimeForms();
+  int counter = 0;
+  for (String verb in lines) {
+    print(half_url + lang + verb);
+    counter += 1;
+    print("counter $counter");
 
-  final elements = await page.$$('div.word-translated-wrap');
+    await page.goto(half_url + lang + verb);
 
-  print(elements);
+    final elements = await page.$$('div.word-translated-wrap');
 
-  // Call another method from main.
+    print(elements);
 
-  await searchForVerb(page, "decir");
+    // Call another method from main.
+    /* await searchForVerb(page, "decir");
+    final button = await page.$('#search_button');
+    // Click on the button element.
+    await button.click();
+    // Wait for the page to reload. You can adjust the waiting time as needed.
+    await page.waitForNavigation();*/
 
-  final button = await page.$('#search_button');
-
-  // Click on the button element.
-  await button.click();
-
-  // Wait for the page to reload. You can adjust the waiting time as needed.
-  await page.waitForNavigation();
-
-  await lookForKonjugations(page);
-
+    Map verbMap = await lookForKonjugations(page, timeForms);
+    addVerbToFile(verb, verbMap);
+  }
   // Close the browser.
   await browser.close();
 }
 
-Future<void> lookForKonjugations(pup.Page page) async {
+void addVerbToFile(String verb, Map verbMap) {
+  final fileName = 'verbsDE.json';
+  File file = File(fileName);
+  Map<String, dynamic> existingData = {};
+
+  // Check if the file exists and read its content.
+  if (file.existsSync()) {
+    final jsonString = file.readAsStringSync();
+    existingData = json.decode(jsonString);
+  }
+
+  // Add or update the data in the map.
+  existingData[verb] = verbMap;
+
+  // Write the updated data to the file with indentation.
+  final encoder = JsonEncoder.withIndent('  '); // Two spaces for indentation.
+  final prettyJson = encoder.convert(existingData);
+  file.writeAsStringSync(prettyJson);
+}
+
+Future<List<String>> readLinesFromFile(String filePath) async {
+  final lines = <String>[];
+  try {
+    final file = File(filePath);
+    final contents = await file.readAsLines();
+    lines.addAll(contents);
+  } catch (e) {
+    print('An error occurred: $e');
+  }
+  return lines;
+}
+
+String? pronounReplacements(String pronoun) {
+  if (lang == "spanisch/") {
+    Map<String, String> replacements = {
+      'él/ella/usted': 'él/ella/Ud.',
+      'nosotros/nosotras': 'nosotros',
+      'vosotros/vosotras': 'vosotros',
+      'ellos/ellas/ustedes': 'ellos/ellas/Uds.',
+      '(tú)': 'tú',
+      '(usted)': 'él/ella/Ud.',
+      '(nosotros/nosotras)': 'nosotros',
+      '(vosotros/vosotras)': 'vosotros',
+      '(ustedes)': 'ellos/ellas/Uds.',
+    };
+    return replacements[pronoun];
+  }
+  if (lang == "deutsch/") {
+    Map<String, String> replacements = {
+      "er/sie/es" : "er_sie_es"
+    };
+    return replacements[pronoun];
+  }
+  return null;
+}
+
+List<String> supportedTimeForms() {
+  if (lang == "spanisch/") {
+    return [
+      "presente",
+      "imperfecto",
+      "indefinido",
+      "futuro",
+      "condicional",
+      "perfecto",
+      "pluscuamperfecto",
+      "subjuntivo presente",
+      "imperativo afirmativo",
+      "imperativo negativo"
+    ];
+  }
+  if (lang == "deutsch/") {
+    return [
+      "Präsens",
+      "Präteritum",
+      "Perfekt",
+      "Plusquamperfekt",
+      "Futur I",
+      "Futur II",
+    ];
+  }
+  return [];
+}
+
+Future<Map> lookForKonjugations(pup.Page page, List<String> timeForms) async {
+  var verbDict = {};
   print("lookForKonjugations");
   final elements = await page.$$('div.ft-single-table');
   print(elements.length);
@@ -50,8 +144,13 @@ Future<void> lookForKonjugations(pup.Page page) async {
       timeForm =
           await h3Element.evaluate('(element) => element.textContent.trim()');
       print("timeform $timeForm");
+      if (!timeForms.contains(timeForm)) {
+        continue;
+      }
+      var timeFormDict = {};
+      timeFormDict[timeForm] = {};
       final table = await element.$('div.ft-single-table table.table');
-      print("table found");
+
 
       final tableBody = await table.$('tbody');
       // Iterate through the table rows
@@ -59,21 +158,45 @@ Future<void> lookForKonjugations(pup.Page page) async {
       for (final row in rows) {
         final cells = await row.$$('td');
         if (cells.length >= 2) {
+          var value = "";
           final pronoun = await cells[0]
               .evaluate('(element) => element.textContent.trim()');
-          final value = await cells[1].$eval(
+          /*final value = await cells[1].$eval(
               '.flected_form', '(element) => element.textContent.trim()');
-          if (pronoun != null && value != null) {
-            print("words : $pronoun $value");
+*/
+          value = await cells[1].$eval(
+            'span',
+            '(element) => element.textContent.trim()',
+          );
+          try {
+            // if there is an auxillary verb like: yo he hecho
+            final value2 = await cells[2].$eval(
+              'span',
+              '(element) => element.textContent.trim()',
+            );
+            value = "$value $value2";
+          } catch (e) {
+
+          }
+          if (pronoun != null) {
+            String newPronoun = pronounReplacements(pronoun) ?? pronoun;
+            // print("words : ${newPronoun} $value");
+            if (timeForms.contains(timeForm)) {
+              timeFormDict[timeForm][newPronoun] = value;
+            }
             //resultDict[pronoun] = value;
           }
         }
+      }
+      if (timeFormDict.isNotEmpty) {
+        verbDict[timeForm] = timeFormDict[timeForm];
       }
     } catch (e) {
       print("crashed");
     }
   }
-
+  print("verbDict  $verbDict");
+  return verbDict;
   //allDicts[timeForm] = resultDict;
 }
 
@@ -97,4 +220,3 @@ Future<void> searchForVerb(pup.Page page, String verb) async {
   value = await input.property('value');
   print('Input Element Value: ${await value.jsonValue}');
 }
-
