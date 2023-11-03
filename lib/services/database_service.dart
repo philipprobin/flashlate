@@ -26,27 +26,15 @@ class DatabaseService {
   };
 
 
-  static Future<void> signupWithApple() async {
+  static Future<UserCredential> signupWithApple() async {
     final credential = await SignInWithApple.getAppleIDCredential(
       scopes: [
         AppleIDAuthorizationScopes.email,
         AppleIDAuthorizationScopes.fullName,
       ],
-
-      // TODO: Remove these if you have no need for them
-      // nonce: 'example-nonce',
-      // state: 'example-state',
     );
 
-    // ignore: avoid_print
     print(credential);
-
-    final credential1 = await SignInWithApple.getAppleIDCredential(
-        scopes: [
-        AppleIDAuthorizationScopes.email,
-        AppleIDAuthorizationScopes.fullName,
-        ],
-    );
 
     print(credential.authorizationCode);
     final signInCredential = OAuthProvider("apple.com").credential(
@@ -55,8 +43,8 @@ class DatabaseService {
     );
     final userCredential = await FirebaseAuth.instance.signInWithCredential(signInCredential);
 
-// Now use your user
     print(userCredential.user);
+    return userCredential;
   }
   static Future<DocumentReference<Map<String, dynamic>>?>
       get _userDocRef async {

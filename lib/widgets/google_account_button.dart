@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flashlate/services/database_service.dart';
 import 'package:flutter/material.dart';
@@ -23,7 +25,6 @@ class _AccountButtonState extends State<AccountButton> {
         _showAccountManagementDialog(context);
       },
       icon: Icon(
-
         Icons.person,
         key: Key("person_icon"),
         size: 36,
@@ -40,13 +41,13 @@ class _AccountButtonState extends State<AccountButton> {
         final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
         if (googleUser != null) {
           final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
+              await googleUser.authentication;
           final AuthCredential credential = GoogleAuthProvider.credential(
             accessToken: googleAuth.accessToken,
             idToken: googleAuth.idToken,
           );
           final UserCredential userCredential =
-          await _auth.signInWithCredential(credential);
+              await _auth.signInWithCredential(credential);
           debugPrint(
               'Signed in with Google: ${userCredential.user!.displayName}');
         }
@@ -70,7 +71,8 @@ class _AccountButtonState extends State<AccountButton> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              if (_auth.currentUser == null) // Show only if user is not signed in
+              if (_auth.currentUser == null &&
+                  Platform.isAndroid) // Show only if user is not signed in
                 ListTile(
                   leading: Icon(Icons.login),
                   title: Text('Sign In with Google'),
@@ -99,15 +101,16 @@ class _AccountButtonState extends State<AccountButton> {
                   // Add your logic here to delete the app account
                 },
               ),
-              ListTile(
-                leading: Icon(Icons.delete),
-                title: Text('Sign In with Apple'),
-                onTap: () async {
-                  DatabaseService.signupWithApple();
-                  Navigator.pop(context); // Close the bottom sheet
-                  // Add your logic here to delete the app account
-                },
-              ),
+              if (_auth.currentUser == null && Platform.isIOS)
+                ListTile(
+                  leading: Icon(Icons.delete),
+                  title: Text('Sign In with Apple'),
+                  onTap: () async {
+                    DatabaseService.signupWithApple();
+                    Navigator.pop(context); // Close the bottom sheet
+                    // Add your logic here to delete the app account
+                  },
+                ),
             ],
           ),
         );

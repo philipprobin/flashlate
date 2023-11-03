@@ -1,4 +1,3 @@
-
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -23,7 +22,6 @@ class _AuthenticationServiceState extends State<AuthenticationService> {
   final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email']);
   bool isFirstRun = true; // Flag to track if it's the first run
 
-
   @override
   void initState() {
     super.initState();
@@ -37,7 +35,7 @@ class _AuthenticationServiceState extends State<AuthenticationService> {
 
     if (isFirstRun) {
       // This is the first run, call checkAndSignIn
-     if (Platform.isIOS) {
+      if (Platform.isIOS) {
         await checkAndSignInWithApple();
       } else {
         await checkAndSignInWithGoogle();
@@ -47,8 +45,24 @@ class _AuthenticationServiceState extends State<AuthenticationService> {
     }
   }
 
-  Future<void>  checkAndSignInWithApple() async {
-    DatabaseService.signupWithApple();
+  Future<void> checkAndSignInWithApple() async {
+    UserCredential userCredential = await DatabaseService.signupWithApple();
+    _createUserDoc(userCredential);
+  }
+
+  Future<void> _createUserDoc(UserCredential userCredential) async {
+    // Add user's UID as a document in the "flashcards" collection if not already exists
+    final CollectionReference flashcardsCollection =
+        FirebaseFirestore.instance.collection('flashcards');
+    final DocumentSnapshot userDoc =
+        await flashcardsCollection.doc(userCredential.user!.uid).get();
+    if (!userDoc.exists) {
+      await flashcardsCollection.doc(userCredential.user!.uid).set({
+        'Deck': [],
+        // Add more fields if needed
+      });
+      debugPrint('User document added to flashcards collection.');
+    }
   }
 
   Future<void> checkAndSignInWithGoogle() async {
@@ -58,24 +72,18 @@ class _AuthenticationServiceState extends State<AuthenticationService> {
       try {
         final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
         if (googleUser != null) {
-          final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+          final GoogleSignInAuthentication googleAuth =
+              await googleUser.authentication;
           final AuthCredential credential = GoogleAuthProvider.credential(
             accessToken: googleAuth.accessToken,
             idToken: googleAuth.idToken,
           );
-          final UserCredential userCredential = await _auth.signInWithCredential(credential);
-          debugPrint('Signed in with Google: ${userCredential.user!.displayName}');
+          final UserCredential userCredential =
+              await _auth.signInWithCredential(credential);
+          debugPrint(
+              'Signed in with Google: ${userCredential.user!.displayName}');
 
-          // Add user's UID as a document in the "flashcards" collection if not already exists
-          final CollectionReference flashcardsCollection = FirebaseFirestore.instance.collection('flashcards');
-          final DocumentSnapshot userDoc = await flashcardsCollection.doc(userCredential.user!.uid).get();
-          if (!userDoc.exists) {
-            await flashcardsCollection.doc(userCredential.user!.uid).set({
-              'Deck': [],
-              // Add more fields if needed
-            });
-            debugPrint('User document added to flashcards collection.');
-          }
+          _createUserDoc(userCredential);
         }
       } catch (e) {
         debugPrint('Google Sign-In Error: $e');
