@@ -1,6 +1,9 @@
 
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flashlate/services/database_service.dart';
 import 'package:flashlate/services/synchronize_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -34,14 +37,21 @@ class _AuthenticationServiceState extends State<AuthenticationService> {
 
     if (isFirstRun) {
       // This is the first run, call checkAndSignIn
-      await checkAndSignIn();
-
+     if (Platform.isIOS) {
+        await checkAndSignInWithApple();
+      } else {
+        await checkAndSignInWithGoogle();
+      }
       // Set the flag to false so that it won't run again
       await prefs.setBool('firstRun', false);
     }
   }
 
-  Future<void> checkAndSignIn() async {
+  Future<void>  checkAndSignInWithApple() async {
+    DatabaseService.signupWithApple();
+  }
+
+  Future<void> checkAndSignInWithGoogle() async {
     User? user = _auth.currentUser;
 
     if (user == null) {

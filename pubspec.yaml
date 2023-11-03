@@ -35,8 +35,9 @@ dependencies:
   http: ^0.13.3
   html: ^0.15.0
   shared_preferences: ^2.2.0
-  puppeteer: 3.2.0
+  # puppeteer: 3.2.0
   rename_app: ^1.1.0
+  sign_in_with_apple: ^5.0.0
 
   firebase_core: ^2.15.1
   firebase_auth: ^4.8.0
@@ -99,7 +100,8 @@ flutter:
     - assets/home.svg
     - assets/list.svg
     - assets/brain.svg
-    - assets/grammar_rules/
+    - assets/grammar_rules/grammatical_rules_de.json
+    - assets/grammar_rules/grammatical_rules_es.json
 
   fonts:
     - family: AvertaStd

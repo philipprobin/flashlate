@@ -39,12 +39,12 @@ class _TopBarWidgetState extends State<TopBarWidget> {
                 child: Container(
                   child: SvgPicture.asset(
                     'assets/image.svg',
-                    height: kToolbarHeight-8, // -2*vertical padding
+                    height: kToolbarHeight - 8, // -2*vertical padding
                   ),
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
                 child: Container(
                   child: ToggleWidget(
                     width: 40,

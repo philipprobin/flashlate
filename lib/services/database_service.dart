@@ -1,12 +1,47 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
-import 'dart:io';
+
 
 import 'package:flutter/services.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class DatabaseService {
+
+  static Future<void> signupWithApple() async {
+    final credential = await SignInWithApple.getAppleIDCredential(
+      scopes: [
+        AppleIDAuthorizationScopes.email,
+        AppleIDAuthorizationScopes.fullName,
+      ],
+
+      // TODO: Remove these if you have no need for them
+      // nonce: 'example-nonce',
+      // state: 'example-state',
+    );
+
+    // ignore: avoid_print
+    print(credential);
+
+    final credential1 = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+        AppleIDAuthorizationScopes.email,
+        AppleIDAuthorizationScopes.fullName,
+        ],
+    );
+
+    print(credential.authorizationCode);
+    final signInCredential = OAuthProvider("apple.com").credential(
+      idToken: credential.identityToken!,
+      accessToken: credential.authorizationCode!,
+    );
+    final userCredential = await FirebaseAuth.instance.signInWithCredential(signInCredential);
+
+// Now use your user
+    print(userCredential.user);
+  }
   static Future<DocumentReference<Map<String, dynamic>>?>
       get _userDocRef async {
     final user = FirebaseAuth.instance.currentUser;

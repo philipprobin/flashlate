@@ -3,16 +3,17 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flashlate/screens/conjugation_page.dart';
 import 'package:flashlate/screens/list_page.dart';
 import 'package:flashlate/screens/main_page..dart';
-import 'package:flashlate/screens/my_page.dart';
 import 'package:flashlate/screens/practice_page.dart';
 import 'package:flashlate/services/authentification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+
   runApp(MyApp());
 }
 
@@ -68,7 +69,6 @@ class MyApp extends StatelessWidget {
         '/list': (context) => ListPage(),
         '/auth': (context) => const AuthenticationService(),
         '/conjugation': (context) => ConjugationPage(),
-        '/my': (context) => MyPage(),
 
       },
     );

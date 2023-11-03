@@ -1,17 +1,18 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flashlate/services/database_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../services/synchronize_service.dart';
 
-class GoogleAccountButton extends StatefulWidget {
-  GoogleAccountButton({Key? key}) : super(key: key);
+class AccountButton extends StatefulWidget {
+  AccountButton({Key? key}) : super(key: key);
 
   @override
-  _GoogleAccountButtonState createState() => _GoogleAccountButtonState();
+  _AccountButtonState createState() => _AccountButtonState();
 }
 
-class _GoogleAccountButtonState extends State<GoogleAccountButton> {
+class _AccountButtonState extends State<AccountButton> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email']);
 
@@ -94,6 +95,15 @@ class _GoogleAccountButtonState extends State<GoogleAccountButton> {
                 leading: Icon(Icons.delete),
                 title: Text('Delete App Account'),
                 onTap: () async {
+                  Navigator.pop(context); // Close the bottom sheet
+                  // Add your logic here to delete the app account
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.delete),
+                title: Text('Sign In with Apple'),
+                onTap: () async {
+                  DatabaseService.signupWithApple();
                   Navigator.pop(context); // Close the bottom sheet
                   // Add your logic here to delete the app account
                 },
