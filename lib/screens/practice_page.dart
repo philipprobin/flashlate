@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import '../services/database_service.dart';
 import '../services/local_storage_service.dart';
 import '../widgets/number_container_widget.dart';
-import 'conjugation_page.dart';
-import 'main_page..dart';
 
 class PracticePage extends StatefulWidget {
   @override
@@ -86,7 +84,6 @@ class _PracticePageState extends State<PracticePage> {
       debugPrint("list elements ${userDeck.length}");
       currentIndex = fetchedIndex;
       _setKnownCardsNumbers(currentIndex);
-      showFrontSide = true;
     });
   }
 
@@ -113,7 +110,8 @@ class _PracticePageState extends State<PracticePage> {
     // to show updated knownCards for the last rating
     setState(() {
       _setKnownCardsNumbers(currentIndex+1);
-
+      /// todo: show front side when swiping
+      showFrontSide = true;
     });
 
     if (currentIndex + 1 < userDeck.length) {
@@ -261,31 +259,6 @@ class _PracticePageState extends State<PracticePage> {
                                       color: Colors.grey,
                                     ),
                                   ),
-                                ),
-                                Positioned(
-                                  bottom: 0,
-                                  right: 10,
-                                  child: (conjugationResult != null)
-                                      ? ElevatedButton(
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: Theme.of(context)
-                                                .primaryColor, // Use the primary color
-                                          ),
-                                          onPressed: () {
-
-                                            Navigator.pushNamed(
-                                              context,
-                                              ConjugationPage.routeName,
-                                              arguments: ConjugationArguments(
-                                                conjugationResult,
-                                              ),
-                                            );
-                                            // Add your button's onPressed functionality here
-                                          },
-                                          child: Text(
-                                              "Conjugate ..."),
-                                        )
-                                      : Container(),
                                 ),
                               ],
                             ),

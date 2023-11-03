@@ -2,8 +2,9 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:puppeteer/puppeteer.dart' as pup;
 
-final lang = "deutsch/";
-final filePath = 'lib/deutschVerbs.txt'; // Provide the correct file path
+final lang = "spanisch/";
+final filePath = 'lib/spanischVerbs.txt'; // Provide the correct file path
+final fileName = 'verbsESzwei.json';
 
 void main() async {
   // Launch the Puppeteer browser.
@@ -17,7 +18,7 @@ void main() async {
 
   final half_url = 'https://de.pons.com/verbtabellen/';
 
-  //var lines = ["haben", "gehen"];
+  //var lines = ["haber", "ir"];
   // final verb = 'volver';
   List<String> timeForms = supportedTimeForms();
   int counter = 0;
@@ -48,7 +49,6 @@ void main() async {
 }
 
 void addVerbToFile(String verb, Map verbMap) {
-  final fileName = 'verbsDE.json';
   File file = File(fileName);
   Map<String, dynamic> existingData = {};
 
@@ -82,15 +82,16 @@ Future<List<String>> readLinesFromFile(String filePath) async {
 String? pronounReplacements(String pronoun) {
   if (lang == "spanisch/") {
     Map<String, String> replacements = {
-      'él/ella/usted': 'él/ella/Ud.',
+      'él/ella/usted': 'el_ella_Ud',
       'nosotros/nosotras': 'nosotros',
       'vosotros/vosotras': 'vosotros',
-      'ellos/ellas/ustedes': 'ellos/ellas/Uds.',
-      '(tú)': 'tú',
-      '(usted)': 'él/ella/Ud.',
+      'ellos/ellas/ustedes': 'ellos_ellas_Uds',
+      'tú' : 'tu',
+      '(tú)': 'tu',
+      '(usted)': 'el_ella_Ud.',
       '(nosotros/nosotras)': 'nosotros',
       '(vosotros/vosotras)': 'vosotros',
-      '(ustedes)': 'ellos/ellas/Uds.',
+      '(ustedes)': 'ellos_ellas_Uds',
     };
     return replacements[pronoun];
   }
@@ -143,10 +144,12 @@ Future<Map> lookForKonjugations(pup.Page page, List<String> timeForms) async {
       final h3Element = await element.$('h3');
       timeForm =
           await h3Element.evaluate('(element) => element.textContent.trim()');
+
       print("timeform $timeForm");
       if (!timeForms.contains(timeForm)) {
         continue;
       }
+      //timeForm = timeForm.replaceAll(" ", "_").replaceAll("ä", "ae");
       var timeFormDict = {};
       timeFormDict[timeForm] = {};
       final table = await element.$('div.ft-single-table table.table');
@@ -158,31 +161,32 @@ Future<Map> lookForKonjugations(pup.Page page, List<String> timeForms) async {
       for (final row in rows) {
         final cells = await row.$$('td');
         if (cells.length >= 2) {
-          var value = "";
+          var auxVerb = "";
+          var mainVerb = "";
           final pronoun = await cells[0]
               .evaluate('(element) => element.textContent.trim()');
           /*final value = await cells[1].$eval(
               '.flected_form', '(element) => element.textContent.trim()');
 */
-          value = await cells[1].$eval(
+          var value = await cells[1].$eval(
             'span',
             '(element) => element.textContent.trim()',
           );
           try {
             // if there is an auxillary verb like: yo he hecho
-            final value2 = await cells[2].$eval(
+            mainVerb = await cells[2].$eval(
               'span',
               '(element) => element.textContent.trim()',
             );
-            value = "$value $value2";
+            auxVerb = value;
           } catch (e) {
-
+            mainVerb = value;
           }
           if (pronoun != null) {
             String newPronoun = pronounReplacements(pronoun) ?? pronoun;
             // print("words : ${newPronoun} $value");
             if (timeForms.contains(timeForm)) {
-              timeFormDict[timeForm][newPronoun] = value;
+              timeFormDict[timeForm][newPronoun] = {"mainVerb": mainVerb, "auxVerb": auxVerb};
             }
             //resultDict[pronoun] = value;
           }

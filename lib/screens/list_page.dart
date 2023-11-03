@@ -89,23 +89,6 @@ class _ListPageState extends State<ListPage> {
 
     List<CategoryTileWidget> categoryWidgets = [];
 
-    /*userDeck.forEach((deckName, cards) {
-      List<WordTileWidget> wordWidgets = [];
-      for (Map<String, dynamic> card in cards) {
-        //String time = card['time'];
-        Map<String, dynamic> translation = card['translation'];
-        wordWidgets.add(WordTileWidget(
-          word: translation.keys.first,
-          translation: translation.values.first.toString(),
-          onDelete: () {},
-        ));
-      }
-      var categoryWidget = CategoryTileWidget(
-          deckName, wordWidgets.reversed.toList(), handleDeleteDeck);
-      categoryWidgets.add(categoryWidget);
-    });
-    return categoryWidgets;
-    */
     debugPrint("userdeck $userDeck");
     userDeck.forEach((deckName, cards) {
       List<WordTileWidget> wordWidgets = [];

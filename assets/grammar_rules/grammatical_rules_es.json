@@ -1,0 +1,870 @@
+{
+  "vo": [
+    "presente.yo",
+    "indefinido.el_ella_Ud"
+  ],
+  "os": [
+    "pluscuamperfecto.nosotros",
+    "condicional.nosotros",
+    "futuro.nosotros",
+    "subjuntivo_presente.nosotros",
+    "imperativo_negativo.vosotros",
+    "imperativo_negativo.nosotros",
+    "indefinido.nosotros",
+    "subjuntivo_futuro.nosotros",
+    "imperativo_afirmativo.nosotros",
+    "presente.nosotros",
+    "subjuntivo_imperfecto.nosotros",
+    "perfecto.nosotros",
+    "imperfecto.nosotros",
+    "imperativo_afirmativo.vosotros"
+  ],
+  "is": [
+    "pluscuamperfecto.vosotros",
+    "imperativo_negativo.vosotros",
+    "subjuntivo_presente.vosotros",
+    "indefinido.nosotros",
+    "presente.vosotros",
+    "subjuntivo_futuro.vosotros",
+    "indefinido.vosotros",
+    "condicional.vosotros",
+    "perfecto.vosotros",
+    "imperfecto.vosotros",
+    "subjuntivo_imperfecto.vosotros",
+    "futuro.vosotros"
+  ],
+  "es": [
+    "imperativo_negativo.tu",
+    "subjuntivo_futuro.tu",
+    "subjuntivo_imperfecto.tu",
+    "subjuntivo_presente.tu",
+    "presente.el_ella_Ud",
+    "presente.tu"
+  ],
+  "ve": [
+    "imperativo_afirmativo.tu",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_negativo.el_ella_Ud",
+    "presente.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "indefinido.yo",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "en": [
+    "subjuntivo_presente.ellos_ellas_Uds",
+    "imperativo_afirmativo.tu",
+    "subjuntivo_futuro.ellos_ellas_Uds",
+    "presente.ellos_ellas_Uds",
+    "imperativo_negativo.ellos_ellas_Uds",
+    "imperativo_afirmativo.ellos_ellas_Uds",
+    "subjuntivo_imperfecto.ellos_ellas_Uds"
+  ],
+  "ía": [
+    "imperativo_afirmativo.tu",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_negativo.el_ella_Ud",
+    "presente.el_ella_Ud",
+    "imperfecto.yo",
+    "imperfecto.el_ella_Ud",
+    "condicional.yo",
+    "subjuntivo_presente.yo",
+    "pluscuamperfecto.el_ella_Ud",
+    "pluscuamperfecto.yo",
+    "condicional.el_ella_Ud",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "as": [
+    "imperativo_negativo.tu",
+    "subjuntivo_presente.tu",
+    "subjuntivo_imperfecto.tu",
+    "perfecto.tu",
+    "presente.tu",
+    "pluscuamperfecto.tu",
+    "condicional.tu",
+    "imperfecto.tu"
+  ],
+  "an": [
+    "perfecto.ellos_ellas_Uds",
+    "subjuntivo_presente.ellos_ellas_Uds",
+    "imperfecto.ellos_ellas_Uds",
+    "pluscuamperfecto.ellos_ellas_Uds",
+    "imperativo_negativo.ellos_ellas_Uds",
+    "presente.ellos_ellas_Uds",
+    "imperativo_afirmativo.ellos_ellas_Uds",
+    "condicional.ellos_ellas_Uds",
+    "subjuntivo_imperfecto.ellos_ellas_Uds",
+    "imperativo_afirmativo.vosotros"
+  ],
+  "ví": [
+    "indefinido.yo"
+  ],
+  "te": [
+    "imperativo_negativo.tu",
+    "imperativo_negativo.el_ella_Ud",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_afirmativo.tu",
+    "presente.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "indefinido.tu",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "ió": [
+    "indefinido.el_ella_Ud"
+  ],
+  "on": [
+    "presente.ellos_ellas_Uds",
+    "imperativo_afirmativo.tu",
+    "indefinido.ellos_ellas_Uds",
+    "indefinido._"
+  ],
+  "ré": [
+    "indefinido.yo",
+    "futuro.yo"
+  ],
+  "ás": [
+    "futuro.tu",
+    "presente.tu"
+  ],
+  "rá": [
+    "futuro.el_ella_Ud"
+  ],
+  "án": [
+    "presente.ellos_ellas_Uds",
+    "futuro.ellos_ellas_Uds"
+  ],
+  "to": [
+    "perfecto.ellos_ellas_Uds",
+    "perfecto.yo",
+    "pluscuamperfecto.yo",
+    "pluscuamperfecto.nosotros",
+    "presente.yo",
+    "perfecto.el_ella_Ud",
+    "pluscuamperfecto.vosotros",
+    "perfecto.tu",
+    "pluscuamperfecto.ellos_ellas_Uds",
+    "pluscuamperfecto.el_ella_Ud",
+    "pluscuamperfecto.tu",
+    "perfecto.vosotros",
+    "perfecto.nosotros"
+  ],
+  "va": [
+    "imperativo_negativo.el_ella_Ud",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_afirmativo.tu",
+    "presente.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "se": [
+    "subjuntivo_presente.nosotros",
+    "imperativo_negativo.el_ella_Ud",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_afirmativo.tu",
+    "imperativo_negativo.nosotros",
+    "presente.el_ella_Ud",
+    "imperativo_negativo.ellos_ellas_Uds",
+    "imperativo_afirmativo.nosotros",
+    "subjuntivo_presente.yo",
+    "subjuntivo_imperfecto.yo",
+    "imperativo_afirmativo.ellos_ellas_Uds",
+    "indefinido.yo",
+    "subjuntivo_imperfecto.el_ella_Ud",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "re": [
+    "subjuntivo_futuro.yo",
+    "subjuntivo_futuro.el_ella_Ud",
+    "imperativo_negativo.el_ella_Ud",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_afirmativo.tu",
+    "presente.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "ed": [
+    "imperativo_afirmativo.vosotros"
+  ],
+  "oy": [
+    "presente.yo"
+  ],
+  "ba": [
+    "imperativo_negativo.el_ella_Ud",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_afirmativo.tu",
+    "presente.el_ella_Ud",
+    "imperfecto.yo",
+    "imperfecto.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "ui": [
+    "indefinido.yo"
+  ],
+  "ue": [
+    "imperativo_afirmativo.tu",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_negativo.el_ella_Ud",
+    "indefinido.el_ella_Ud",
+    "presente.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "do": [
+    "presente.yo",
+    "indefinido.el_ella_Ud",
+    
+    "perfecto.ellos_ellas_Uds",
+    "perfecto.yo",
+    "pluscuamperfecto.yo",
+    "pluscuamperfecto.nosotros",
+    "perfecto.el_ella_Ud",
+    "pluscuamperfecto.vosotros",
+    "perfecto.tu",
+    "pluscuamperfecto.ellos_ellas_Uds",
+    "pluscuamperfecto.el_ella_Ud",
+    "pluscuamperfecto.tu",
+    "perfecto.vosotros",
+    "perfecto.nosotros"
+  ],
+  "ya": [
+    "imperativo_negativo.el_ella_Ud",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_afirmativo.tu",
+    "presente.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "id": [
+    "imperativo_afirmativo.vosotros"
+  ],
+  "ra": [
+    "imperativo_afirmativo.tu",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_negativo.el_ella_Ud",
+    "presente.el_ella_Ud",
+    "imperfecto.yo",
+    "imperfecto.el_ella_Ud",
+    "presente.ellos_ellas_Uds",
+    "subjuntivo_presente.yo",
+    "subjuntivo_imperfecto.yo",
+    "subjuntivo_imperfecto.el_ella_Ud",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "ea": [
+    "imperativo_negativo.el_ella_Ud",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_afirmativo.tu",
+    "presente.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "sé": [
+    "indefinido.yo",
+    "imperativo_afirmativo.tu",
+    "presente.yo"
+  ],
+  "eo": [
+    "presente.yo"
+  ],
+  "vi": [
+    "indefinido.yo"
+  ],
+  "io": [
+    "presente.yo",
+    "indefinido.el_ella_Ud"
+  ],
+  "go": [
+    "presente.yo"
+  ],
+  "ís": [
+    "presente.vosotros"
+  ],
+  "ce": [
+    "imperativo_negativo.el_ella_Ud",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_afirmativo.tu",
+    "presente.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "indefinido.yo",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "je": [
+    "imperativo_negativo.el_ella_Ud",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_afirmativo.tu",
+    "presente.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "indefinido.yo",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "jo": [
+    "presente.yo",
+    "indefinido.el_ella_Ud"
+  ],
+  "ho": [
+    "perfecto.ellos_ellas_Uds",
+    "perfecto.yo",
+    "pluscuamperfecto.yo",
+    "pluscuamperfecto.nosotros",
+    "presente.yo",
+    "perfecto.el_ella_Ud",
+    "pluscuamperfecto.vosotros",
+    "perfecto.tu",
+    "pluscuamperfecto.ellos_ellas_Uds",
+    "pluscuamperfecto.el_ella_Ud",
+    "pluscuamperfecto.tu",
+    "perfecto.vosotros",
+    "perfecto.nosotros"
+  ],
+  "ga": [
+    "imperativo_negativo.el_ella_Ud",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_afirmativo.tu",
+    "presente.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "di": [
+    "indefinido.yo",
+    "imperativo_afirmativo.tu"
+  ],
+  "tá": [
+    "imperativo_afirmativo.tu",
+    "presente.el_ella_Ud"
+  ],
+  "té": [
+    "imperativo_negativo.el_ella_Ud",
+    "subjuntivo_presente.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "indefinido.yo",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "és": [
+    "imperativo_negativo.tu",
+    "subjuntivo_presente.tu"
+  ],
+  "én": [
+    "imperativo_negativo.ellos_ellas_Uds",
+    "imperativo_afirmativo.tu",
+    "imperativo_afirmativo.ellos_ellas_Uds",
+    "subjuntivo_presente.ellos_ellas_Uds"
+  ],
+  "ad": [
+    "imperativo_afirmativo.vosotros"
+  ],
+  "ne": [
+    "imperativo_negativo.el_ella_Ud",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_afirmativo.tu",
+    "presente.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "indefinido.yo",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "zo": [
+    "presente.yo",
+    "indefinido.el_ella_Ud"
+  ],
+  "az": [
+    "imperativo_afirmativo.tu"
+  ],
+  "ro": [
+    "presente.yo"
+  ],
+  "ró": [
+    "indefinido.el_ella_Ud"
+  ],
+  "lo": [
+    "presente.yo"
+  ],
+  "la": [
+    "imperativo_afirmativo.tu",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_negativo.el_ella_Ud",
+    "presente.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "lé": [
+    "indefinido.yo"
+  ],
+  "ló": [
+    "indefinido.el_ella_Ud"
+  ],
+  "le": [
+    "imperativo_negativo.el_ella_Ud",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_afirmativo.tu",
+    "presente.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "za": [
+    "imperativo_afirmativo.tu",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_negativo.el_ella_Ud",
+    "presente.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "cé": [
+    "indefinido.yo"
+  ],
+  "zó": [
+    "indefinido.el_ella_Ud"
+  ],
+  "da": [
+    "imperativo_afirmativo.tu",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_negativo.el_ella_Ud",
+    "presente.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "dé": [
+    "imperativo_negativo.el_ella_Ud",
+    "subjuntivo_presente.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "indefinido.yo",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "dó": [
+    "indefinido.el_ella_Ud"
+  ],
+  "de": [
+    "imperativo_negativo.el_ella_Ud",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_afirmativo.tu",
+    "presente.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "indefinido.yo",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "mo": [
+    "presente.yo"
+  ],
+  "ma": [
+    "imperativo_afirmativo.tu",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_negativo.el_ella_Ud",
+    "presente.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "mé": [
+    "indefinido.yo"
+  ],
+  "mó": [
+    "indefinido.el_ella_Ud"
+  ],
+  "me": [
+    "imperativo_negativo.el_ella_Ud",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_afirmativo.tu",
+    "presente.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "he": [
+    "perfecto.yo",
+    "presente.yo",
+    "imperativo_afirmativo.tu",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_negativo.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "ha": [
+    "perfecto.el_ella_Ud",
+    "imperativo_afirmativo.tu",
+    "presente.el_ella_Ud"
+  ],
+  "be": [
+    "imperativo_afirmativo.tu",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_negativo.el_ella_Ud",
+    "presente.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "indefinido.yo",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "bo": [
+    "presente.yo",
+    "indefinido.el_ella_Ud"
+  ],
+  "pe": [
+    "imperativo_negativo.el_ella_Ud",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_afirmativo.tu",
+    "presente.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "indefinido.yo",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "po": [
+    "presente.yo",
+    "indefinido.el_ella_Ud"
+  ],
+  "pa": [
+    "imperativo_negativo.el_ella_Ud",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_afirmativo.tu",
+    "presente.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "ja": [
+    "imperativo_afirmativo.tu",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_negativo.el_ella_Ud",
+    "presente.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "jé": [
+    "indefinido.yo"
+  ],
+  "jó": [
+    "indefinido.el_ella_Ud"
+  ],
+  "eé": [
+    "indefinido.yo"
+  ],
+  "eó": [
+    "indefinido.el_ella_Ud"
+  ],
+  "ee": [
+    "imperativo_negativo.el_ella_Ud",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_afirmativo.tu",
+    "presente.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "uí": [
+    "indefinido.yo"
+  ],
+  "ta": [
+    "imperativo_afirmativo.tu",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_negativo.el_ella_Ud",
+    "presente.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "tó": [
+    "indefinido.el_ella_Ud"
+  ],
+  "co": [
+    "presente.yo"
+  ],
+  "ca": [
+    "imperativo_negativo.el_ella_Ud",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_afirmativo.tu",
+    "presente.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "cí": [
+    "indefinido.yo"
+  ],
+  "ué": [
+    "indefinido.yo"
+  ],
+  "gó": [
+    "indefinido.el_ella_Ud"
+  ],
+  "so": [
+    "presente.yo",
+    "indefinido.el_ella_Ud"
+  ],
+  "sa": [
+    "imperativo_afirmativo.tu",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_negativo.el_ella_Ud",
+    "presente.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "só": [
+    "indefinido.el_ella_Ud"
+  ],
+  "ge": [
+    "imperativo_afirmativo.tu",
+    "presente.el_ella_Ud"
+  ],
+  "gí": [
+    "indefinido.yo"
+  ],
+  "ia": [
+    "imperativo_afirmativo.tu",
+    "presente.el_ella_Ud"
+  ],
+  "ié": [
+    "indefinido.yo"
+  ],
+  "ie": [
+    "imperativo_negativo.el_ella_Ud",
+    "subjuntivo_presente.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "indefinido.yo",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "vé": [
+    "indefinido.yo"
+  ],
+  "vó": [
+    "indefinido.el_ella_Ud"
+  ],
+  "có": [
+    "indefinido.el_ella_Ud"
+  ],
+  "yo": [
+    "presente.yo"
+  ],
+  "yé": [
+    "indefinido.yo"
+  ],
+  "yó": [
+    "indefinido.el_ella_Ud"
+  ],
+  "ye": [
+    "imperativo_negativo.el_ella_Ud",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_afirmativo.tu",
+    "presente.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "no": [
+    "presente.yo",
+    "indefinido.el_ella_Ud"
+  ],
+  "na": [
+    "imperativo_afirmativo.tu",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_negativo.el_ella_Ud",
+    "presente.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "né": [
+    "indefinido.yo"
+  ],
+  "nó": [
+    "indefinido.el_ella_Ud"
+  ],
+  "lí": [
+    "indefinido.yo"
+  ],
+  "pé": [
+    "indefinido.yo"
+  ],
+  "pó": [
+    "indefinido.el_ella_Ud"
+  ],
+  "eí": [
+    "indefinido.yo"
+  ],
+  "bí": [
+    "indefinido.yo"
+  ],
+  "mí": [
+    "indefinido.yo"
+  ],
+  "al": [
+    "imperativo_afirmativo.tu"
+  ],
+  "rí": [
+    "indefinido.yo"
+  ],
+  "tí": [
+    "indefinido.yo"
+  ],
+  "dí": [
+    "indefinido.yo"
+  ],
+  "úo": [
+    "presente.yo"
+  ],
+  "úa": [
+    "imperativo_afirmativo.tu",
+    "presente.el_ella_Ud"
+  ],
+  "uó": [
+    "indefinido.el_ella_Ud"
+  ],
+  "úe": [
+    "imperativo_negativo.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "hé": [
+    "indefinido.yo"
+  ],
+  "hó": [
+    "indefinido.el_ella_Ud"
+  ],
+  "ío": [
+    "presente.yo"
+  ],
+  "íe": [
+    "imperativo_negativo.el_ella_Ud",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_afirmativo.tu",
+    "presente.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "bé": [
+    "indefinido.yo"
+  ],
+  "bó": [
+    "indefinido.el_ella_Ud"
+  ],
+  "oí": [
+    "indefinido.yo"
+  ],
+  "íd": [
+    "imperativo_afirmativo.vosotros"
+  ],
+  "ño": [
+    "presente.yo"
+  ],
+  "ña": [
+    "imperativo_afirmativo.tu",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_negativo.el_ella_Ud",
+    "presente.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "ñé": [
+    "indefinido.yo"
+  ],
+  "ñó": [
+    "indefinido.el_ella_Ud"
+  ],
+  "ñe": [
+    "imperativo_negativo.el_ella_Ud",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_afirmativo.tu",
+    "presente.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "ae": [
+    "imperativo_afirmativo.tu",
+    "presente.el_ella_Ud"
+  ],
+  "ní": [
+    "indefinido.yo"
+  ],
+  "uo": [
+    "presente.yo"
+  ],
+  "ua": [
+    "imperativo_afirmativo.tu",
+    "presente.el_ella_Ud"
+  ],
+  "üé": [
+    "indefinido.yo"
+  ],
+  "üe": [
+    "imperativo_negativo.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "pí": [
+    "indefinido.yo"
+  ],
+  "aí": [
+    "indefinido.yo"
+  ],
+  "ón": [
+    "imperativo_afirmativo.tu"
+  ],
+  "sí": [
+    "indefinido.yo"
+  ],
+  "oo": [
+    "presente.yo"
+  ],
+  "oa": [
+    "imperativo_afirmativo.tu",
+    "presente.el_ella_Ud"
+  ],
+  "oé": [
+    "indefinido.yo"
+  ],
+  "oó": [
+    "indefinido.el_ella_Ud"
+  ],
+  "oe": [
+    "imperativo_negativo.el_ella_Ud",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_afirmativo.tu",
+    "presente.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "fo": [
+    "presente.yo"
+  ],
+  "fa": [
+    "imperativo_afirmativo.tu",
+    "presente.el_ella_Ud"
+  ],
+  "fé": [
+    "indefinido.yo"
+  ],
+  "fó": [
+    "indefinido.el_ella_Ud"
+  ],
+  "fe": [
+    "imperativo_negativo.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "üí": [
+    "indefinido.yo"
+  ],
+  "jí": [
+    "indefinido.yo"
+  ],
+  "ñí": [
+    "indefinido.yo"
+  ],
+  "xo": [
+    "presente.yo"
+  ],
+  "xa": [
+    "imperativo_afirmativo.tu",
+    "presente.el_ella_Ud"
+  ],
+  "xé": [
+    "indefinido.yo"
+  ],
+  "xó": [
+    "indefinido.el_ella_Ud"
+  ],
+  "xe": [
+    "imperativo_negativo.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_afirmativo.el_ella_Ud"
+  ],
+  "zé": [
+    "indefinido.yo"
+  ],
+  "ze": [
+    "imperativo_negativo.el_ella_Ud",
+    "subjuntivo_presente.yo",
+    "subjuntivo_presente.el_ella_Ud",
+    "imperativo_afirmativo.el_ella_Ud"
+  ]
+}
