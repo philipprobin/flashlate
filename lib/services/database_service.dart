@@ -10,6 +10,22 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class DatabaseService {
 
+  static Map<String, String> languageMap = {
+    "Deutsch": "de",
+    "English": "en",
+    "Español": "es",
+    "Français" : "fr",
+    "Polski" : "pl",
+    "Português" : "pt",
+    "Italiano" : "it"
+  };
+
+  static Map<String, List<String>> verbSuffixes = {
+    "es": ['ar', 'er', 'ir'],
+    "de": ['en'],
+  };
+
+
   static Future<void> signupWithApple() async {
     final credential = await SignInWithApple.getAppleIDCredential(
       scopes: [
@@ -224,18 +240,23 @@ class DatabaseService {
     });
   }
 
-  static Future<Map<String, dynamic>?> queryVerbES(String conjToFind) async {
+  static Future<Map<String, dynamic>?> queryConjugation(String conjToFind, String lang) async {
+    // input lang must be supported
+    String countryCode = languageMap[lang]!;
+    String? countryCodeCap = countryCode.toUpperCase();
     // Initialize Firebase with your service account credentials
     debugPrint("conjToFind --$conjToFind--");
 
     final CollectionReference collectionRef =
-    FirebaseFirestore.instance.collection('verbsES');
+        FirebaseFirestore.instance.collection('verbs$countryCodeCap');
 
-    final List<String> filterList = await generateFilters(conjToFind);
+    final List<String> filterList = await generateFilters(conjToFind, countryCode);
 
     // Search by filters
     for (final filterString in filterList) {
-      final querySnapshot = await collectionRef.where(filterString, isEqualTo: conjToFind).get();
+      final querySnapshot = await collectionRef
+          .where(filterString, isEqualTo: conjToFind)
+          .get();
 
       if (querySnapshot.docs.isNotEmpty) {
         final doc = querySnapshot.docs.first;
@@ -251,9 +272,12 @@ class DatabaseService {
     }
 
     // Look for infinitive
-    final verbSuffixesEs = ['ar', 'er', 'ir'];
+    List<String>? suffixes = [];
+    if (verbSuffixes.containsKey(countryCode)){
+      suffixes = verbSuffixes[countryCode];
+    }
 
-    for (final suffix in verbSuffixesEs) {
+    for (final suffix in suffixes!) {
       if (conjToFind.endsWith(suffix)) {
         final doc = await collectionRef.doc(conjToFind).get();
 
@@ -273,10 +297,10 @@ class DatabaseService {
   }
 
 
-  static Future<List<String>> generateFilters(String conjToFind) async {
+  static Future<List<String>> generateFilters(String conjToFind, String countryCode) async {
     var filters = <String>[];
     Map<String, dynamic> grammaticalRules =
-        await loadJsonFile("assets/grammar_rules/grammatical_rules_es.json");
+        await loadJsonFile("assets/grammar_rules/grammatical_rules_$countryCode.json");
 
     grammaticalRules.forEach((key, value) {
       if (conjToFind.endsWith(key)) {

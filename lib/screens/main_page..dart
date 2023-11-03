@@ -1,5 +1,4 @@
 import 'package:flashlate/screens/conjugation_page.dart';
-import 'package:flashlate/services/cloud_function_service.dart';
 import 'package:flashlate/services/database_service.dart';
 import 'package:flashlate/services/lang_local_storage_service.dart';
 import 'package:flutter/material.dart';
@@ -74,6 +73,18 @@ class _MainPageState extends State<MainPage> {
     });
   }
 
+  void targetTextDeleted(){
+    targetTextEditingController.text = '';
+    targetText = "";
+    conjugationResult = null;
+  }
+
+  void sourceTextDeleted(){
+    sourceTextEditingController.text = '';
+    sourceText = "";
+  }
+
+
   Future<void> loadDropdownLangValuesFromPreferences() async {
     String? currentSourceLang =
         await LangLocalStorageService.getLanguage("source");
@@ -122,9 +133,9 @@ class _MainPageState extends State<MainPage> {
   Future<void> translateSourceText(String sourceLang, String targetLang) async {
     final translation = await translationService.translateText(
         sourceLang, targetLang, sourceText);
-    if (currentTargetValueLang == "Español") {
+    if (currentTargetValueLang == "Español" || currentTargetValueLang == "Deutsch" ) {
       // input in source, translation is forwarded
-      showSpanishConjugations(translation);
+      checkConjugations(translation);
     }
     setState(() {
       targetText = translation;
@@ -147,7 +158,7 @@ class _MainPageState extends State<MainPage> {
     return newWords;
   }
 
-  Future<bool> showSpanishConjugations(String translatedText) async {
+  Future<bool> checkConjugations(String translatedText) async {
     /*List<String> oldTargetWordList = [];
     List<Map<String, dynamic>> verbDictsInTargetText = [];*/
 
@@ -170,10 +181,31 @@ class _MainPageState extends State<MainPage> {
     }
 
     // query only new words
+    // use currentTranslatedTextList
+
     List<String> newWords = findAndReplaceWords(currentTranslatedTextList);
-    for (String word in newWords) {
+    for (int i = 0; i < newWords.length; i++) {
+      String word = newWords[i];
+
+      // check for aux verbs in inputfield
+      if (currentTargetValueLang == "Español"){
+        if (word.endsWith("ado") || word.endsWith("ido")) {
+          List<String> auxVerbsEs = ["he", "has", "ha", "hemos", "habéis", "han", "había", "habías", "habíamos", "habíais", "habían"];
+          // check only one word before mainVerb if its in auxList
+          int index = currentTranslatedTextList.indexOf(word);
+          // word with ado or ido cant be first index
+          if (index > 0){
+            String wordBeforeVerb = currentTranslatedTextList[index -1];
+            if (auxVerbsEs.contains(wordBeforeVerb)) {
+              // The word has a suffix "ado" or "ido" and is preceded by an auxiliary verb.
+              // You can perform your desired action here.
+              word = "$wordBeforeVerb $word";
+            }
+          }
+        }
+      }
       Map<String, dynamic>? conjugations =
-          await DatabaseService.queryVerbES(word);
+          await DatabaseService.queryConjugation(word, currentTargetValueLang);
       if (conjugations != null) {
         if (conjugations.isNotEmpty) {
           debugPrint("conjugations found: ${conjugations["infinitive"]}");
@@ -200,15 +232,14 @@ class _MainPageState extends State<MainPage> {
   }
 
   Future<void> translateTargetText(String sourceLang, String targetLang) async {
-    if (currentTargetValueLang == "Español") {
-      showSpanishConjugations(sourceText);
+    if (currentTargetValueLang == "Español" || currentTargetValueLang == "Deutsch") {
+      checkConjugations(sourceText);
     }
     final translation = await translationService.translateText(
         sourceLang, targetLang, sourceText);
     setState(() {
       targetText = translation;
       sourceTextEditingController.text = targetText;
-      debugPrint('Translated Text: $targetText');
     });
   }
 
@@ -394,13 +425,10 @@ class _MainPageState extends State<MainPage> {
                                   onTap: () {
                                     setState(() {
                                       if (editingMode) {
-                                        sourceTextEditingController.text = '';
-                                        sourceText = "";
+                                        sourceTextDeleted();
                                       } else {
-                                        sourceTextEditingController.text = '';
-                                        targetTextEditingController.text = '';
-                                        sourceText = "";
-                                        targetText = "";
+                                        sourceTextDeleted();
+                                        targetTextDeleted();
                                       }
                                     });
                                   },
@@ -641,14 +669,11 @@ class _MainPageState extends State<MainPage> {
                                     onTap: () {
                                       setState(() {
                                         if (editingMode) {
-                                          targetTextEditingController.text = '';
-                                          targetText = "";
+                                          targetTextDeleted();
                                           ;
                                         } else {
-                                          sourceTextEditingController.text = '';
-                                          targetTextEditingController.text = '';
-                                          targetText = "";
-                                          sourceText = "";
+                                          sourceTextDeleted();
+                                          targetTextDeleted();
                                         }
                                       });
                                     },
@@ -685,6 +710,7 @@ class _MainPageState extends State<MainPage> {
                                               ConjugationPage.routeName,
                                               arguments: ConjugationArguments(
                                                 conjugationResult,
+                                                currentTargetValueLang
                                               ),
                                             );
                                             // Add your button's onPressed functionality here
@@ -720,6 +746,7 @@ class _MainPageState extends State<MainPage> {
 // a customizable title and message.
 class ConjugationArguments {
   final Map<String, dynamic>? verbConjugations;
+  String lang;
 
-  ConjugationArguments(this.verbConjugations);
+  ConjugationArguments(this.verbConjugations, this.lang);
 }
