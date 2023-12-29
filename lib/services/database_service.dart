@@ -39,7 +39,7 @@ class DatabaseService {
     print(credential.authorizationCode);
     final signInCredential = OAuthProvider("apple.com").credential(
       idToken: credential.identityToken!,
-      accessToken: credential.authorizationCode!,
+      accessToken: credential.authorizationCode,
     );
     final userCredential = await FirebaseAuth.instance.signInWithCredential(signInCredential);
 
