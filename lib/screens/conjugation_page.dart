@@ -1,3 +1,4 @@
+import 'package:flashlate/services/database_service.dart';
 import 'package:flutter/material.dart';
 import 'package:loading_skeleton_niu/loading_skeleton.dart';
 
@@ -19,7 +20,7 @@ class ConjugationPage extends StatelessWidget {
     final args =
     ModalRoute.of(context)!.settings.arguments as ConjugationArguments;
 
-    debugPrint("verbConjugations --------${args.verbConjugations}");
+    debugPrint("gptTranslation --------${args.verbConjugations?["conjugations"]["gptTranslation"]}");
     return Scaffold(
       appBar: AppBar(
         elevation: 0.0,
@@ -46,8 +47,9 @@ class ConjugationPage extends StatelessWidget {
                 fontWeight: FontWeight.w700,
               ),
             ),
+            (args.verbConjugations?["conjugations"]["gptTranslation"]?[DatabaseService.languageMap[args.sourceLang]] == null)?
             FutureBuilder<String>(
-              future: CloudFunctionService.get_gpt_translations(args.verbConjugations?["infinitive"], args.sourceLang),
+              future: CloudFunctionService.get_gpt_translations(args.verbConjugations?["infinitive"], args.sourceLang, args.lang),
               builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return ClipRRect(
@@ -73,6 +75,16 @@ class ConjugationPage extends StatelessWidget {
                   );
                 }
               },
+            ) :
+
+            Text(
+              args.verbConjugations?["conjugations"]["gptTranslation"][DatabaseService.languageMap[args.sourceLang]],
+              style: TextStyle(
+                fontSize: 18,
+                fontStyle: FontStyle.italic,
+                fontWeight: FontWeight.w100,
+                color: Colors.grey[600],
+              ),
             ),
             Container(
               height: 16,

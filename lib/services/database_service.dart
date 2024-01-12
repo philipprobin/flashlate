@@ -309,4 +309,41 @@ class DatabaseService {
       return {};
     }
   }
+
+  static void uploadGptTranslation(String sourceLang,String targetLang, String verb, String shortenedGptTranslation) {
+    String countryCodeTarget = languageMap[targetLang]!;
+    String countryCodeSource = languageMap[sourceLang]!;
+    String? countryCodeCapTarget = countryCodeTarget.toUpperCase();
+    // Initialize Firebase with your service account credentials
+    debugPrint("verb --$verb, gptTranslation --$shortenedGptTranslation, lang --$targetLang");
+    final CollectionReference collectionRef =
+    FirebaseFirestore.instance.collection('verbs$countryCodeCapTarget');
+
+    final DocumentReference docRef = collectionRef.doc(verb);
+
+    FirebaseFirestore.instance.runTransaction((transaction) async {
+      DocumentSnapshot snapshot = await transaction.get(docRef);
+
+      if (!snapshot.exists) {
+        throw Exception("Document does not exist!");
+      }
+
+      Map<String, dynamic> gptTranslation = (snapshot.data() as Map<String, dynamic>).containsKey('gptTranslation')
+          ? (snapshot.get('gptTranslation') as Map<String, dynamic>)
+          : {};
+
+      // Check if the countryCode already exists
+      if (!gptTranslation.containsKey(countryCodeSource)) {
+        // Update the map with the new translation
+        gptTranslation[countryCodeSource] = shortenedGptTranslation;
+
+        // Update the document
+        transaction.update(docRef, {'gptTranslation': gptTranslation});
+      }
+    }).then((result) {
+      print("Transaction completed");
+    }).catchError((error) {
+      print("Failed to update: $error");
+    });
+  }
 }

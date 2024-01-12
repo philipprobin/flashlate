@@ -1,9 +1,11 @@
 import 'dart:convert';
+import 'package:flashlate/services/database_service.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
 
 class CloudFunctionService {
   static Future<String> get_gpt_translations(
-      String verb, String currentSourceValueLang) async {
+      String verb, String currentSourceValueLang, String currentTargetValueLang) async {
     const parameterlessUrl =
         "https://us-central1-flashlate-397020.cloudfunctions.net/gpt_translate_function?verb=";
     final url =
@@ -14,8 +16,10 @@ class CloudFunctionService {
       // Successful response with a status code of 200.
       final String responseBody = response.body;
       // Handle the response data here.
-
-      return extractStringUntil5thComma(responseBody);
+      String shortenedGptTranslation = extractStringUntil5thComma(responseBody);
+      debugPrint("get_gpt_translation - verb $verb");
+      DatabaseService.uploadGptTranslation(currentSourceValueLang, currentTargetValueLang, verb, shortenedGptTranslation);
+      return shortenedGptTranslation;
     } else {
       // Handle the error if the response has a different status code.
       print('Request failed with status: ${response.statusCode}');
@@ -32,6 +36,7 @@ class CloudFunctionService {
     }
   }
 
+  // not in use, switch to firebase call Database.queryConjugation
   static Future<Map<String, dynamic>?> fetchSpanishConjugations(
       String verb, String currentSourceValueLang) async {
     const parameterlessUrl =

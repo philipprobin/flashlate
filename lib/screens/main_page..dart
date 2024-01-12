@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flashlate/services/translation_service.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
-import 'package:flutter_tts/flutter_tts.dart';
 import '../services/local_storage_service.dart';
 import '../widgets/lang_drop_button_widget.dart';
 import '../widgets/app_bar_main_widget.dart';
@@ -270,7 +269,7 @@ class _MainPageState extends State<MainPage> {
           await DatabaseService.queryConjugation(word, currentTargetValueLang);
       if (conjugations != null) {
         if (conjugations.isNotEmpty) {
-          debugPrint("conjugations found: ${conjugations["infinitive"]}");
+          debugPrint("conjugations found: ${conjugations["conjugations"]["gptTranslation"]}");
           verbDictsInTargetText.add(conjugations);
         }
       }
