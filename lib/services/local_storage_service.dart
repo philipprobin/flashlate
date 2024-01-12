@@ -351,7 +351,6 @@ class LocalStorageService {
           await LocalStorageService.fetchLocalDeck(deck);
 
       List<Map<String, dynamic>> cardListOneDeck = [];
-      debugPrint("fetchedLocalDeck: $fetchedLocalDeck");
       for (Map<String, dynamic> card in fetchedLocalDeck) {
         cardListOneDeck.add(cardWithToLearn(card));
       }

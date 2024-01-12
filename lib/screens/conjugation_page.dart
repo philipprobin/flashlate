@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:loading_skeleton_niu/loading_skeleton.dart';
 
+import '../services/cloud_function_service.dart';
 import 'main_page..dart';
 
 class ConjugationPage extends StatelessWidget {
@@ -44,14 +46,33 @@ class ConjugationPage extends StatelessWidget {
                 fontWeight: FontWeight.w700,
               ),
             ),
-            Text(
-              args.verbConjugations?["translations"] ?? "",
-              style: TextStyle(
-                fontSize: 18,
-                fontStyle: FontStyle.italic,
-                fontWeight: FontWeight.w100,
-                color: Colors.grey[600],
-              ),
+            FutureBuilder<String>(
+              future: CloudFunctionService.get_gpt_translations(args.verbConjugations?["infinitive"], args.sourceLang),
+              builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return ClipRRect(
+                    // create border circular radius
+                    borderRadius: BorderRadius.circular(4),
+                    child: LoadingSkeleton(
+                      width: 100,
+                      height: 18,
+                      colors: [Colors.amber, Colors.purpleAccent, Colors.amber],
+                    ),
+                ); // Show a loading indicator.
+                } else if (snapshot.hasError) {
+                  return Text('Error: ${snapshot.error}');
+                } else {
+                  return Text(
+                    snapshot.data ?? 'No translation available',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontStyle: FontStyle.italic,
+                      fontWeight: FontWeight.w100,
+                      color: Colors.grey[600],
+                    ),
+                  );
+                }
+              },
             ),
             Container(
               height: 16,

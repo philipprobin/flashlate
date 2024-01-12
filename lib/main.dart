@@ -115,7 +115,7 @@ class _MyHomePageState extends State<MyHomePage> {
       body: DoubleBackToCloseApp(
         child: _tabs[_currentIndex],
         snackBar: const SnackBar(
-          content: Text('Zum beenden nochmal Tippen'),
+          content: Text('Tap again to quit'),
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(

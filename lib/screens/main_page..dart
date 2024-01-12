@@ -3,7 +3,9 @@ import 'package:flashlate/services/database_service.dart';
 import 'package:flashlate/services/lang_local_storage_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flashlate/services/translation_service.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import '../services/local_storage_service.dart';
 import '../widgets/lang_drop_button_widget.dart';
 import '../widgets/app_bar_main_widget.dart';
@@ -18,8 +20,8 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   final TranslationService translationService = TranslationService();
 
-  String sourceText = '';
-  String targetText = '';
+  String textToTranslate = '';
+  String translatedText = '';
   bool uploadSuccess = false;
 
   static const double cornerRadius = 20.0;
@@ -48,6 +50,8 @@ class _MainPageState extends State<MainPage> {
   String currentSourceValueLang = "Deutsch";
 
   String originalVerb = "";
+  bool speakSlowSource = false;
+  bool speakSlowTarget = false;
 
   Map<String, dynamic>? conjugationResult;
 
@@ -58,14 +62,42 @@ class _MainPageState extends State<MainPage> {
     loadDropdownDeckItemsFromPreferences();
   }
 
+  Future<void> _pasteFromClipboard(
+      TextEditingController controller, String controllerType) async {
+    final clipboardData = await Clipboard.getData(Clipboard.kTextPlain);
+    if (clipboardData != null) {
+      setState(() {
+        controller.text = clipboardData.text ?? '';
+        if (controllerType == "source") {
+          // Assuming you want to translate the source text after pasting
+          textToTranslate = controller.text;
+          if (textToTranslate.isNotEmpty) {
+            // Call the relevant translation function based on your logic
+            // For example, translating from source to target language
+            translateSourceText(currentSourceValueLang, currentTargetValueLang);
+          }
+        }
+        if (controllerType == "target") {
+          textToTranslate = controller.text;
+          if (textToTranslate.isNotEmpty) {
+            debugPrint("_pasteFromClipboard: $translatedText");
+            // Call the relevant translation function based on your logic
+            // For example, translating from source to target language
+            translateTargetText(currentTargetValueLang, currentSourceValueLang);
+          }
+        }
+      });
+    }
+  }
+
   Future<void> refreshOnTogglePress(bool mode) async {
     setState(() {
       if (!mode) {
-        debugPrint("translateMode: $targetText");
-        if (sourceText.isEmpty && targetText.isNotEmpty) {
+        debugPrint("translateMode: $translatedText");
+        if (textToTranslate.isEmpty && translatedText.isNotEmpty) {
           translateTargetText(currentTargetValueLang, currentSourceValueLang);
         }
-        if (sourceText.isNotEmpty && targetText.isEmpty) {
+        if (textToTranslate.isNotEmpty && translatedText.isEmpty) {
           translateSourceText(currentSourceValueLang, currentTargetValueLang);
         }
       }
@@ -73,17 +105,16 @@ class _MainPageState extends State<MainPage> {
     });
   }
 
-  void targetTextDeleted(){
+  void targetTextDeleted() {
     targetTextEditingController.text = '';
-    targetText = "";
+    translatedText = "";
     conjugationResult = null;
   }
 
-  void sourceTextDeleted(){
+  void sourceTextDeleted() {
     sourceTextEditingController.text = '';
-    sourceText = "";
+    textToTranslate = "";
   }
-
 
   Future<void> loadDropdownLangValuesFromPreferences() async {
     String? currentSourceLang =
@@ -132,15 +163,30 @@ class _MainPageState extends State<MainPage> {
 
   Future<void> translateSourceText(String sourceLang, String targetLang) async {
     final translation = await translationService.translateText(
-        sourceLang, targetLang, sourceText);
-    if (currentTargetValueLang == "Español" || currentTargetValueLang == "Deutsch" ) {
+        sourceLang, targetLang, textToTranslate);
+    if (currentTargetValueLang == "Español" ||
+        currentTargetValueLang == "Deutsch") {
       // input in source, translation is forwarded
       checkConjugations(translation);
     }
     setState(() {
-      targetText = translation;
-      targetTextEditingController.text = targetText;
+      translatedText = translation;
+      targetTextEditingController.text = translatedText;
     });
+  }
+
+  Future<void> speakText(
+      TextEditingController textEditingController, currentLanguage) async {
+    if (currentLanguage == currentSourceValueLang) {
+      await translationService.speakText(
+          textEditingController.text, currentLanguage, speakSlowSource);
+      speakSlowSource = !speakSlowSource;
+    }
+    else{
+      await translationService.speakText(
+          textEditingController.text, currentLanguage, speakSlowTarget);
+      speakSlowTarget = !speakSlowTarget;
+    }
   }
 
   List<String> findAndReplaceWords(List<String> currentTranslatedTextList) {
@@ -172,11 +218,15 @@ class _MainPageState extends State<MainPage> {
 
     // delete verbs from verbList that are not in translatedText anymore
     if (verbDictsInTargetText.isNotEmpty) {
+      try{
       for (Map<String, dynamic> verbDict in verbDictsInTargetText) {
         String verb = verbDict["input"];
         if (!currentTranslatedTextList.contains(verb)) {
           verbDictsInTargetText.remove(verbDict);
         }
+      }
+      }catch(e){
+        debugPrint("error: $e");
       }
     }
 
@@ -188,14 +238,26 @@ class _MainPageState extends State<MainPage> {
       String word = newWords[i];
 
       // check for aux verbs in inputfield
-      if (currentTargetValueLang == "Español"){
+      if (currentTargetValueLang == "Español") {
         if (word.endsWith("ado") || word.endsWith("ido")) {
-          List<String> auxVerbsEs = ["he", "has", "ha", "hemos", "habéis", "han", "había", "habías", "habíamos", "habíais", "habían"];
+          List<String> auxVerbsEs = [
+            "he",
+            "has",
+            "ha",
+            "hemos",
+            "habéis",
+            "han",
+            "había",
+            "habías",
+            "habíamos",
+            "habíais",
+            "habían"
+          ];
           // check only one word before mainVerb if its in auxList
           int index = currentTranslatedTextList.indexOf(word);
           // word with ado or ido cant be first index
-          if (index > 0){
-            String wordBeforeVerb = currentTranslatedTextList[index -1];
+          if (index > 0) {
+            String wordBeforeVerb = currentTranslatedTextList[index - 1];
             if (auxVerbsEs.contains(wordBeforeVerb)) {
               // The word has a suffix "ado" or "ido" and is preceded by an auxiliary verb.
               // You can perform your desired action here.
@@ -232,14 +294,15 @@ class _MainPageState extends State<MainPage> {
   }
 
   Future<void> translateTargetText(String sourceLang, String targetLang) async {
-    if (currentTargetValueLang == "Español" || currentTargetValueLang == "Deutsch") {
-      checkConjugations(sourceText);
+    if (currentTargetValueLang == "Español" ||
+        currentTargetValueLang == "Deutsch") {
+      checkConjugations(textToTranslate);
     }
     final translation = await translationService.translateText(
-        sourceLang, targetLang, sourceText);
+        sourceLang, targetLang, textToTranslate);
     setState(() {
-      targetText = translation;
-      sourceTextEditingController.text = targetText;
+      translatedText = translation;
+      sourceTextEditingController.text = translatedText;
     });
   }
 
@@ -379,14 +442,15 @@ class _MainPageState extends State<MainPage> {
                               Padding(
                                 padding: const EdgeInsets.all(32.0),
                                 child: Center(
+                                  // source box
                                   child: TextFormField(
                                     maxLines: 2,
                                     onChanged: (value) {
                                       if (!editingMode) {
                                         setState(() {
-                                          sourceText = value;
+                                          textToTranslate = value;
                                           if (value.isEmpty) {
-                                            targetText = "";
+                                            translatedText = "";
                                           }
                                           translateSourceText(
                                               currentSourceValueLang,
@@ -417,29 +481,83 @@ class _MainPageState extends State<MainPage> {
                                 ),
                               ),
                               Positioned(
-                                top: 10,
-                                // Adjust the top position as needed
+                                top: 0,
                                 right: 10,
-                                // Adjust the right position as needed
-                                child: GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      if (editingMode) {
-                                        sourceTextDeleted();
-                                      } else {
-                                        sourceTextDeleted();
-                                        targetTextDeleted();
-                                      }
-                                    });
-                                  },
-                                  child: const SizedBox(
-                                    width: 30,
-                                    height: 30,
-                                    child: Icon(
-                                      Icons.clear,
-                                      color: Colors.black45,
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  // To fit the column size to its children
+                                  children: [
+                                    // Clear button - Shown only if the text field is not empty
+                                    if (sourceTextEditingController
+                                        .text.isNotEmpty)
+                                      IconButton(
+                                        icon: const Icon(Icons.clear,
+                                            color: Colors.black45),
+                                        onPressed: () {
+                                          setState(() {
+                                            if (editingMode) {
+                                              sourceTextDeleted();
+                                            } else {
+                                              sourceTextDeleted();
+                                              targetTextDeleted();
+                                            }
+                                          });
+                                        },
+                                      ),
+
+                                    // Copy to clipboard or Paste button
+                                    // Shown based on the text field content
+                                    IconButton(
+                                      icon: Icon(
+                                          sourceTextEditingController
+                                                  .text.isNotEmpty
+                                              ? Icons.copy
+                                              : Icons.content_paste,
+                                          color: Colors.black45),
+                                      onPressed: () {
+                                        setState(() {
+                                          if (sourceTextEditingController
+                                              .text.isNotEmpty) {
+                                            // Copy to clipboard
+                                            Clipboard.setData(ClipboardData(
+                                                    text:
+                                                        sourceTextEditingController
+                                                            .text))
+                                                .then((_) {
+                                              // Show SnackBar upon successful copy
+                                              ScaffoldMessenger.of(context)
+                                                  .showSnackBar(
+                                                SnackBar(
+                                                  content: Text(
+                                                      'Copied to clipboard'),
+                                                  duration:
+                                                      Duration(seconds: 2),
+                                                ),
+                                              );
+                                            });
+                                          } else {
+                                            // Paste from clipboard
+                                            _pasteFromClipboard(
+                                                sourceTextEditingController,
+                                                "source");
+                                          }
+                                        });
+                                      },
                                     ),
-                                  ),
+                                    if (sourceTextEditingController
+                                        .text.isNotEmpty)
+                                      IconButton(
+                                        icon: const Icon(Icons.volume_up,
+                                            color: Colors.black45),
+                                        onPressed: () {
+                                          setState(() {
+                                            speakText(
+                                                sourceTextEditingController,
+                                                currentSourceValueLang);
+                                          });
+                                        },
+                                      ),
+                                  ],
                                 ),
                               ),
                               Padding(
@@ -622,14 +740,15 @@ class _MainPageState extends State<MainPage> {
                                 Padding(
                                   padding: const EdgeInsets.all(32.0),
                                   child: Center(
+                                    // target box
                                     child: TextFormField(
                                       maxLines: 2,
                                       onChanged: (value) {
                                         if (!editingMode) {
                                           setState(() {
-                                            sourceText = value;
+                                            textToTranslate = value;
                                             if (value.isEmpty) {
-                                              targetText = "";
+                                              translatedText = "";
                                             }
                                             translateTargetText(
                                                 currentTargetValueLang,
@@ -660,36 +779,91 @@ class _MainPageState extends State<MainPage> {
                                     ),
                                   ),
                                 ),
+                                //new
                                 Positioned(
-                                  top: 10,
-                                  // Adjust the top position as needed
+                                  top: 0,
                                   right: 10,
-                                  // Adjust the right position as needed
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      setState(() {
-                                        if (editingMode) {
-                                          targetTextDeleted();
-                                          ;
-                                        } else {
-                                          sourceTextDeleted();
-                                          targetTextDeleted();
-                                        }
-                                      });
-                                    },
-                                    child: const SizedBox(
-                                      width: 30,
-                                      height: 30,
-                                      child: Icon(
-                                        Icons.clear,
-                                        color: Colors.black45,
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    // To fit the column size to its children
+                                    children: [
+                                      // Clear button - Shown only if the text field is not empty
+                                      if (targetTextEditingController
+                                          .text.isNotEmpty)
+                                        IconButton(
+                                          icon: const Icon(Icons.clear,
+                                              color: Colors.black45),
+                                          onPressed: () {
+                                            setState(() {
+                                              if (editingMode) {
+                                                targetTextDeleted();
+                                              } else {
+                                                sourceTextDeleted();
+                                                targetTextDeleted();
+                                              }
+                                            });
+                                          },
+                                        ),
+
+                                      // Copy to clipboard or Paste button
+                                      // Shown based on the text field content
+                                      IconButton(
+                                        icon: Icon(
+                                            targetTextEditingController
+                                                    .text.isNotEmpty
+                                                ? Icons.copy
+                                                : Icons.content_paste,
+                                            color: Colors.black45),
+                                        onPressed: () {
+                                          setState(() {
+                                            if (targetTextEditingController
+                                                .text.isNotEmpty) {
+                                              // Copy to clipboard
+                                              Clipboard.setData(ClipboardData(
+                                                      text:
+                                                          targetTextEditingController
+                                                              .text))
+                                                  .then((_) {
+                                                // Show SnackBar upon successful copy
+                                                ScaffoldMessenger.of(context)
+                                                    .showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
+                                                        'Copied to clipboard'),
+                                                    duration:
+                                                        Duration(seconds: 2),
+                                                  ),
+                                                );
+                                              });
+                                            } else {
+                                              // Paste from clipboard
+                                              _pasteFromClipboard(
+                                                  targetTextEditingController,
+                                                  "target");
+                                            }
+                                          });
+                                        },
                                       ),
-                                    ),
+                                      if (targetTextEditingController
+                                          .text.isNotEmpty)
+                                        IconButton(
+                                          icon: const Icon(Icons.volume_up,
+                                              color: Colors.black45),
+                                          onPressed: () {
+                                            setState(() {
+                                              speakText(
+                                                  targetTextEditingController,
+                                                  currentTargetValueLang);
+                                            });
+                                          },
+                                        ),
+                                    ],
                                   ),
                                 ),
+
                                 Positioned(
                                   bottom: 0,
-                                  right: 10,
+                                  left: 10,
                                   child: (conjugationResult != null)
                                       ? ElevatedButton(
                                           style: ElevatedButton.styleFrom(
@@ -709,9 +883,9 @@ class _MainPageState extends State<MainPage> {
                                               context,
                                               ConjugationPage.routeName,
                                               arguments: ConjugationArguments(
-                                                conjugationResult,
-                                                currentTargetValueLang
-                                              ),
+                                                  conjugationResult,
+                                                  currentTargetValueLang,
+                                                  currentSourceValueLang),
                                             );
                                             // Add your button's onPressed functionality here
                                           },
@@ -747,6 +921,7 @@ class _MainPageState extends State<MainPage> {
 class ConjugationArguments {
   final Map<String, dynamic>? verbConjugations;
   String lang;
+  String sourceLang;
 
-  ConjugationArguments(this.verbConjugations, this.lang);
+  ConjugationArguments(this.verbConjugations, this.lang, this.sourceLang);
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:loading_skeleton_niu/loading_skeleton.dart';
 import '../services/database_service.dart';
 import '../services/local_storage_service.dart';
 import '../widgets/anim_search_bar_widget.dart';
@@ -6,19 +7,20 @@ import '../widgets/categorie_tile_widget.dart';
 import '../widgets/app_bar_list_widget.dart';
 import '../widgets/word_tile_widget.dart';
 
+const double decksPadding = 16.0;
+
 class ListPage extends StatefulWidget {
   @override
   _ListPageState createState() => _ListPageState();
 }
-
 class _ListPageState extends State<ListPage> {
   LocalStorageService localStorageService = LocalStorageService();
+
   final databaseService = DatabaseService();
 
   List<CategoryTileWidget> fetchedCategoryWidgets = [];
 
   TextEditingController searchTextController = TextEditingController();
-
   String newDeckName = '';
   String searchTerm = '';
   static const double cornerRadius = 20.0;
@@ -89,7 +91,6 @@ class _ListPageState extends State<ListPage> {
 
     List<CategoryTileWidget> categoryWidgets = [];
 
-    debugPrint("userdeck $userDeck");
     userDeck.forEach((deckName, cards) {
       List<WordTileWidget> wordWidgets = [];
 
@@ -183,7 +184,7 @@ class _ListPageState extends State<ListPage> {
             width: MediaQuery.of(context).size.width,
             child: Padding(
               padding:
-                  const EdgeInsets.only(left: 16.0, right: 16.0, top: 16.0),
+                  const EdgeInsets.only(left: decksPadding, right: decksPadding, top: decksPadding),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -250,13 +251,22 @@ class _ListPageState extends State<ListPage> {
                       AsyncSnapshot<List<CategoryTileWidget>> snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       // While the future is loading, show a loading indicator.
-                      return Center(
-                        child: Text('No data available.'),
+
+                      return ListView.separated( // change for ListView.seperate
+                        shrinkWrap: true,
+                        itemBuilder: (context, i) => LoadingListItem(),
+                        itemCount: 8,
+                        separatorBuilder: (BuildContext context, int index) {  // fill little space},
+                          return SizedBox(height: 8);
+                        },
+
+                        // add some space
                       );
                     } else if (snapshot.hasError) {
                       // If there's an error, display an error message.
                       return Center(
-                        child: Text('Data has Error. ${snapshot.error.toString()}'),
+                        child: Text(
+                            'Data has Error. ${snapshot.error.toString()}'),
                       );
                     } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                       // If there's no data or the data is empty, show a message.
@@ -334,6 +344,31 @@ class _ListPageState extends State<ListPage> {
           ),
         );
       },
+    );
+  }
+}
+class LoadingListItem extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        ClipRRect(
+          // create border radius
+          borderRadius: BorderRadius.circular(20.0),
+          child: LoadingSkeleton(
+            // set width full screen
+            // avoid render flex error
+            width: MediaQuery.of(context).size.width - 2*decksPadding,
+            height: 56,
+            animationDuration: 300,
+            colors: [
+              Color(0xFFf8f4f4),
+              Color(0xFFf8f4f4),
+              Colors.grey,
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

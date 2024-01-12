@@ -14,6 +14,7 @@ class WordTileWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
+      // print hight of tile
       title: Text(word),
       subtitle: Text(translation),
       trailing: IconButton(

@@ -2,11 +2,42 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class CloudFunctionService {
+  static Future<String> get_gpt_translations(
+      String verb, String currentSourceValueLang) async {
+    const parameterlessUrl =
+        "https://us-central1-flashlate-397020.cloudfunctions.net/gpt_translate_function?verb=";
+    final url =
+        Uri.parse("$parameterlessUrl$verb&sourceLang=$currentSourceValueLang");
+    final response = await http.get(url);
 
+    if (response.statusCode == 200) {
+      // Successful response with a status code of 200.
+      final String responseBody = response.body;
+      // Handle the response data here.
 
-  static Future<Map<String, dynamic>?> fetchSpanishConjugations(String verb, String currentSourceValueLang) async {
-    const parameterlessUrl = "https://us-central1-flashlate-397020.cloudfunctions.net/check_is_spanish_verb?verb=";
-    final url = Uri.parse("$parameterlessUrl$verb&sourceLang=$currentSourceValueLang");
+      return extractStringUntil5thComma(responseBody);
+    } else {
+      // Handle the error if the response has a different status code.
+      print('Request failed with status: ${response.statusCode}');
+      return "";
+    }
+  }
+
+  static String extractStringUntil5thComma(String input) {
+    List<String> parts = input.split(',');
+    if (parts.length <= 5) {
+      return input;
+    } else {
+      return parts.sublist(0, 5).join(',');
+    }
+  }
+
+  static Future<Map<String, dynamic>?> fetchSpanishConjugations(
+      String verb, String currentSourceValueLang) async {
+    const parameterlessUrl =
+        "https://us-central1-flashlate-397020.cloudfunctions.net/check_is_spanish_verb?verb=";
+    final url =
+        Uri.parse("$parameterlessUrl$verb&sourceLang=$currentSourceValueLang");
 
     try {
       final response = await http.get(url);
