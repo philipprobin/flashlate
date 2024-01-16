@@ -1,47 +1,86 @@
+import 'package:flashlate/services/database/community_decks.dart';
+import 'package:flashlate/utils/supported_languages.dart';
 import 'package:flutter/material.dart';
 import 'package:loading_skeleton_niu/loading_skeleton.dart';
-import '../services/database_service.dart';
+import 'package:puppeteer/protocol/page.dart';
+import '../models/core/deck.dart';
+import '../services/database/personal_decks.dart';
 import '../services/local_storage_service.dart';
 import '../widgets/anim_search_bar_widget.dart';
-import '../widgets/categorie_tile_widget.dart';
+import '../widgets/category_tile_widget.dart';
 import '../widgets/app_bar_list_widget.dart';
+import '../widgets/community_deck_list_widget.dart';
+import '../widgets/lang_drop_button_widget.dart';
+import '../widgets/loading_list_item_widget.dart';
+import '../widgets/personal_deck_list_widget.dart';
 import '../widgets/word_tile_widget.dart';
-
-const double decksPadding = 16.0;
 
 class ListPage extends StatefulWidget {
   @override
   _ListPageState createState() => _ListPageState();
 }
+
 class _ListPageState extends State<ListPage> {
   LocalStorageService localStorageService = LocalStorageService();
 
-  final databaseService = DatabaseService();
+  final databaseService = PersonalDecks();
+
+  get communityLanguages => SupportedLanguages.communityLanguages;
+
+  String currentTargetValueLang = "Español";
+  String currentSourceValueLang = "Deutsch";
 
   List<CategoryTileWidget> fetchedCategoryWidgets = [];
+  List<CategoryTileWidget> communityCategoryWidgets = [];
 
   TextEditingController searchTextController = TextEditingController();
   String newDeckName = '';
   String searchTerm = '';
   static const double cornerRadius = 20.0;
 
+  PageController _pageController = PageController(initialPage: 0);
+  int currentPage = 0;
+
   TextEditingController searchTextEditingController = TextEditingController();
+
+  List<CategoryTileWidget> allFetchedCategoryWidgets = [];
+
+  Future<List<CategoryTileWidget>>? _cachedPersonalDecks;
+  Future<List<CategoryTileWidget>>? _cachedCommunityDecks;
 
   @override
   void initState() {
     super.initState();
-    _fetchData().then((categoryWidgets) {
+    /*_fetchLocalDecks().then((categoryWidgets) {
       setState(() {
         fetchedCategoryWidgets = categoryWidgets;
       });
+    });*/
+    _cacheDecks();
+  }
+
+  void _cacheDecks() {
+    _cachedPersonalDecks = _fetchLocalDecks();
+    _cachedCommunityDecks = _fetchCommunityDecks();
+  }
+
+  Future<void> loadDropdownLangValuesFromPreferences() async {
+    var languages =
+        await LocalStorageService.loadDropdownLangValuesFromPreferences(
+            communityLanguages, true);
+    setState(() {
+      currentSourceValueLang = languages["sourceLang"]!;
+      currentTargetValueLang = languages["targetLang"]!;
     });
   }
 
   Future<bool> _updateFetchedCategoryWidgets() async {
-    List<CategoryTileWidget> categoryWidgets = await _fetchData();
+    List<CategoryTileWidget> categoryWidgets = allFetchedCategoryWidgets;
     setState(() {
       fetchedCategoryWidgets = categoryWidgets;
     });
+    // dont fetch new if search gets altered
+    refreshDeckData();
     return true;
   }
 
@@ -49,6 +88,7 @@ class _ListPageState extends State<ListPage> {
     setState(() {
       searchTerm = text;
     });
+    // refreshDeckData();
     await _updateFetchedCategoryWidgets();
   }
 
@@ -57,9 +97,52 @@ class _ListPageState extends State<ListPage> {
       await LocalStorageService.deleteDeck(deckToDelete);
       bool result = await databaseService.deleteDeck(deckToDelete);
       debugPrint("deck deleted: $result");
-
       await _updateFetchedCategoryWidgets();
+      // Refresh data after deletion
+      refreshDeckData();
     }
+  }
+
+  Future<void> _downloadDeck(String deckToDownload) async {
+    if (deckToDownload.isNotEmpty) {
+      String updatedDeckToDownloadName =
+          await LocalStorageService.addDeck(deckToDownload, false);
+      debugPrint("deckName Updated?: $deckToDownload");
+      // check if deckToDownload is in communityCategoryWidgets and add to local and upload
+
+      communityCategoryWidgets.forEach((element) async {
+        // find deck to download in fetched community decks
+        if (element.categoryName == deckToDownload) {
+          // in case deckToDownload is already in local decks set a new name (1)
+          deckToDownload = updatedDeckToDownloadName;
+          bool practiceDeckIsEmpty = await LocalStorageService.checkDeckIsEmpty(
+              "pRaCtIcEmOde-$deckToDownload");
+          // add every card to local deck and practice deck and upload
+          element.words.forEach((element) async {
+            String term = element.word;
+            String translation = element.translation;
+            LocalStorageService.addCardToLocalDeck(
+                deckToDownload, {term: translation});
+            if (!practiceDeckIsEmpty) {
+              LocalStorageService.addCardToLocalDeck(
+                  "pRaCtIcEmOde-$deckToDownload", {
+                "translation": {term: translation},
+                "toLearn": true
+              });
+            }
+            // upload
+            bool response = await databaseService.addCard(
+                deckToDownload, term, translation);
+            if (!response) {
+              debugPrint('upload failed');
+            }
+            debugPrint("upload successful $term - $translation");
+          });
+        }
+      });
+    }
+    // Refresh data after download
+    refreshDeckData();
   }
 
   Future<void> _addNewDeck() async {
@@ -76,15 +159,53 @@ class _ListPageState extends State<ListPage> {
       debugPrint("ListPage boolresult $boolresult");
       // Refetch data and update UI
       await _updateFetchedCategoryWidgets();
+      // Refresh data after adding a new deck
+      refreshDeckData();
     }
   }
 
-  Future<List<CategoryTileWidget>> _fetchData() async {
+  Future<List<CategoryTileWidget>> _fetchCommunityDecks() async {
+    if (_cachedCommunityDecks != null) {
+      return _cachedCommunityDecks!;
+    }
+
+    String? sourceCode =
+        SupportedLanguages.languageMap[currentSourceValueLang]; // de
+    String? targetCode =
+        SupportedLanguages.languageMap[currentTargetValueLang]; // es
+    List<Deck> decks =
+        await CommunityDecks().fetchCommunityDecks("$sourceCode-$targetCode");
+    List<CategoryTileWidget> categoryWidgets = [];
+    for (var deck in decks) {
+      CategoryTileWidget categoryTileWidget = CategoryTileWidget(
+        deck.deckName,
+        deck.cards
+            .map((card) => WordTileWidget(
+                  word: card.term!,
+                  translation: card.translation!,
+                  onDelete: null,
+                  hasDelete: false, // gets overwritten in WordTileWidget
+                ))
+            .toList(),
+        null,
+        false,
+        true,
+        handleDownloadDeck,
+      );
+      categoryWidgets.add(categoryTileWidget);
+    }
+    communityCategoryWidgets = categoryWidgets; // ready to download
+    return categoryWidgets;
+  }
+
+  Future<List<CategoryTileWidget>> _fetchLocalDecks() async {
     // dowload
 
     /*Map<String, dynamic> userDeck = await databaseService.fetchUserDoc();
     debugPrint("decks mf $decks");*/
-
+    if (_cachedPersonalDecks != null) {
+      return _cachedPersonalDecks!;
+    }
     //local
     Map<String, dynamic> userDeck =
         await LocalStorageService.createMapListMapLocalDecks("");
@@ -107,6 +228,7 @@ class _ListPageState extends State<ListPage> {
             word: word,
             translation: translationText,
             onDelete: () {},
+            hasDelete: true,
           ));
         }
       }
@@ -119,6 +241,9 @@ class _ListPageState extends State<ListPage> {
           deckName,
           wordWidgets.reversed.toList(),
           handleDeleteDeck,
+          true,
+          false,
+          handleDownloadDeck,
         );
 
         categoryWidgets.add(categoryWidget);
@@ -132,6 +257,9 @@ class _ListPageState extends State<ListPage> {
         }
       }
     }*/
+    // After fetching, update allFetchedCategoryWidgets
+    allFetchedCategoryWidgets = categoryWidgets; // Assuming 'categoryWidgets' holds the fetched data
+
     return categoryWidgets;
   }
 
@@ -140,6 +268,13 @@ class _ListPageState extends State<ListPage> {
     // This is where you delete the deck in the parent class.
     debugPrint('Deleting deck: $deckName');
     _deleteDeck(deckName);
+  }
+
+  void handleDownloadDeck(String deckName) {
+    // Implement deck deletion logic here using deckName.
+    // This is where you delete the deck in the parent class.
+    debugPrint('Download deck: $deckName');
+    _downloadDeck(deckName);
   }
 
   @override
@@ -153,79 +288,111 @@ class _ListPageState extends State<ListPage> {
             children: [
               Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: ElevatedButton(
-                  onPressed: _addNewDeckPopUp, //then add new deck
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).primaryColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                  ),
-                  child: const Text('Create new deck',
-                      style: TextStyle(color: Colors.white)),
+                child: Container(
+                  color: Colors.blue,
                 ),
               ),
               Container(
                 width: 12,
               ),
-              /*ElevatedButton(
-                onPressed: _deleteDeck,
-                style: ElevatedButton.styleFrom(
-                  primary: Theme.of(context).primaryColor,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextButton(
+                onPressed: () => _pageController.animateToPage(0,
+                    duration: Duration(milliseconds: 300),
+                    curve: Curves.easeInOut),
+                child: Text(
+                  'Personal',
+                  style: currentPage == 0
+                      ? TextStyle(
+                          fontSize: 20.0,
+                          color: Colors.black,
+                        )
+                      : TextStyle(
+                          color: Colors.black,
+                        ),
                 ),
-                child: const Text('-', style: TextStyle(color: Colors.white)),
-              ),*/
+              ),
+              TextButton(
+                onPressed: () => _pageController.animateToPage(1,
+                    duration: Duration(milliseconds: 300),
+                    curve: Curves.easeInOut),
+                child: Text(
+                  'Community',
+                  style: currentPage == 1
+                      ? TextStyle(
+                          fontSize: 20.0,
+                          color: Colors.black,
+                        )
+                      : TextStyle(
+                          color: Colors.black,
+                        ),
+                ),
+              ),
             ],
           ),
           Container(
             width: MediaQuery.of(context).size.width,
             child: Padding(
-              padding:
-                  const EdgeInsets.only(left: decksPadding, right: decksPadding, top: decksPadding),
+              padding: const EdgeInsets.only(
+                  left: decksPadding, right: decksPadding, top: decksPadding),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        "Decks",
-                        style: TextStyle(
-                          fontSize: 24.0,
+                  (currentPage == 0)
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              "Decks",
+                              style: TextStyle(
+                                fontSize: 24.0,
+                              ),
+                            ),
+                            Spacer(),
+                            AnimatedSearchBarWidget(
+                              searchTextEditingController: searchTextController,
+                              onTextChanged: (text) async {
+                                // Handle text changes in the parent class
+
+                                await _handleSearchTextChange(text);
+                              },
+                            ),
+                          ],
+                        )
+                      : Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            LangDropButtonWidget(
+                              items: communityLanguages,
+                              value: currentSourceValueLang,
+                              onChanged: (String? newValue) {
+                                // Handle the selected value here
+                                setState(() {
+                                  currentSourceValueLang = newValue!;
+                                });
+                              },
+                            ),
+                            Icon(Icons.arrow_forward_rounded),
+                            LangDropButtonWidget(
+                              items: communityLanguages,
+                              value: currentTargetValueLang,
+                              onChanged: (String? newValue) {
+                                // Handle the selected value here
+                                setState(() {
+                                  currentTargetValueLang = newValue!;
+                                });
+                              },
+                            ),
+                          ],
                         ),
                       ),
-                      Spacer(),
-                      AnimatedSearchBarWidget(
-                        searchTextEditingController: searchTextController,
-                        onTextChanged: (text) async {
-                          // Handle text changes in the parent class
-
-                          await _handleSearchTextChange(text);
-                        },
-                      ),
-
-                      /*Spacer(),
-                      AnimSearchBarWidget(
-                        boxShadow: false,
-                        width: MediaQuery.of(context).size.width * 0.6,
-                        rtl: false,
-                        textController: searchTextEditingController,
-                        onSuffixTap: () {
-                          setState(() {
-                            searchTextEditingController.clear();
-                            _handleSearchTextChange("");
-                          });
-                        }, onSubmitted: (String value) {
-                          debugPrint("state changed $value");
-                          _handleSearchTextChange(value);
-                      },
-                      ),*/
-                    ],
-                  ),
                 ],
               ),
             ),
@@ -242,59 +409,46 @@ class _ListPageState extends State<ListPage> {
               decoration: BoxDecoration(
                 color: Colors.white,
               ),
-              // doesnt need scrollview!!!!
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                child: FutureBuilder<List<CategoryTileWidget>>(
-                  future: _fetchData(),
-                  builder: (BuildContext context,
-                      AsyncSnapshot<List<CategoryTileWidget>> snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      // While the future is loading, show a loading indicator.
-
-                      return ListView.separated( // change for ListView.seperate
-                        shrinkWrap: true,
-                        itemBuilder: (context, i) => LoadingListItem(),
-                        itemCount: 8,
-                        separatorBuilder: (BuildContext context, int index) {  // fill little space},
-                          return SizedBox(height: 8);
-                        },
-
-                        // add some space
-                      );
-                    } else if (snapshot.hasError) {
-                      // If there's an error, display an error message.
-                      return Center(
-                        child: Text(
-                            'Data has Error. ${snapshot.error.toString()}'),
-                      );
-                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      // If there's no data or the data is empty, show a message.
-                      return Center(
-                        child: Text('No data available.'),
-                      );
-                    } else {
-                      // If data is available, build the list of CategoryTileWidget.
-
-                      final reversedData = snapshot.data?.reversed.toList();
-
-                      // Build the ListView.builder with the reversed data.
-                      return ListView.builder(
-                        itemCount: reversedData?.length,
-                        itemBuilder: (BuildContext context, int index) {
-                          return reversedData?[index];
-                        },
-                      );
-                    }
+                child: PageView(
+                  controller: _pageController,
+                  onPageChanged: (index) {
+                    setState(() {
+                      _cacheDecks();
+                      currentPage = index;
+                    });
                   },
+                  children: [
+                    PersonalDeckListWidget(fetchLocalDecks: _fetchLocalDecks),
+                    CommunityDeckListWidget(
+                        fetchCommunityDecks: _fetchCommunityDecks),
+                  ],
                 ),
               ),
             ),
           ),
         ],
       ),
+      floatingActionButton: (currentPage == 0)
+          ? FloatingActionButton(
+              onPressed: _addNewDeckPopUp,
+              child: Icon(Icons.add),
+              backgroundColor: Theme.of(context).primaryColor,
+            )
+          : null,
     );
   }
+
+  void refreshDeckData() {
+    // Invalidate the cached data
+    _cachedPersonalDecks = null;
+    _cachedCommunityDecks = null;
+
+    // Re-fetch and cache the data
+    _cacheDecks();
+  }
+
 
   void _addNewDeckPopUp() {
     showDialog(
@@ -330,6 +484,7 @@ class _ListPageState extends State<ListPage> {
                   // Handle the deck creation logic here
                   print('Creating deck: $newDeckName');
                   _addNewDeck();
+                  refreshDeckData();
                   Navigator.of(context).pop(); // Close the dialog
                 },
                 style: ElevatedButton.styleFrom(
@@ -344,31 +499,6 @@ class _ListPageState extends State<ListPage> {
           ),
         );
       },
-    );
-  }
-}
-class LoadingListItem extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        ClipRRect(
-          // create border radius
-          borderRadius: BorderRadius.circular(20.0),
-          child: LoadingSkeleton(
-            // set width full screen
-            // avoid render flex error
-            width: MediaQuery.of(context).size.width - 2*decksPadding,
-            height: 56,
-            animationDuration: 300,
-            colors: [
-              Color(0xFFf8f4f4),
-              Color(0xFFf8f4f4),
-              Colors.grey,
-            ],
-          ),
-        ),
-      ],
     );
   }
 }

@@ -1,7 +1,9 @@
 import 'dart:convert';
-import 'package:flashlate/services/database_service.dart';
+import 'package:flashlate/services/database/personal_decks.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
+
+import 'database/conjugations.dart';
 
 class CloudFunctionService {
   static Future<String> get_gpt_translations(
@@ -18,7 +20,7 @@ class CloudFunctionService {
       // Handle the response data here.
       String shortenedGptTranslation = extractStringUntil5thComma(responseBody);
       debugPrint("get_gpt_translation - verb $verb");
-      DatabaseService.uploadGptTranslation(currentSourceValueLang, currentTargetValueLang, verb, shortenedGptTranslation);
+      Conjugations.uploadGptTranslation(currentSourceValueLang, currentTargetValueLang, verb, shortenedGptTranslation);
       return shortenedGptTranslation;
     } else {
       // Handle the error if the response has a different status code.

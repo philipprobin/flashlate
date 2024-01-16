@@ -2,6 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
+import 'lang_local_storage_service.dart';
+
 class LocalStorageService {
   static const String _currentDeckKey = 'currentDeck';
 
@@ -546,6 +548,30 @@ class LocalStorageService {
       throw Exception("The practice mode deck for '$deckName' doesn't exist.");
     }
   }
+
+  static Future<Map<String, String>> loadDropdownLangValuesFromPreferences(List<String> translationLanguages, bool setLanguages) async {
+
+    String? currentSourceLang = await LangLocalStorageService.getLanguage("source");
+    if (translationLanguages.isNotEmpty) {
+      currentSourceLang = translationLanguages[0];
+      if (setLanguages)
+      await LangLocalStorageService.setLanguage("source", currentSourceLang);
+    }
+
+    String? currentTargetLang = await LangLocalStorageService.getLanguage("target");
+    if (translationLanguages.length > 1) {
+      currentTargetLang = translationLanguages[1];
+      if(setLanguages)
+      await LangLocalStorageService.setLanguage("target", currentTargetLang);
+    }
+
+    return {
+      "sourceLang": currentSourceLang ?? translationLanguages[0],
+      "targetLang": currentTargetLang ?? translationLanguages[1]
+    };
+  }
+
+
 
 
 }

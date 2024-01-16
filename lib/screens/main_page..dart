@@ -1,11 +1,14 @@
 import 'package:flashlate/screens/conjugation_page.dart';
-import 'package:flashlate/services/database_service.dart';
+import 'package:flashlate/services/database/personal_decks.dart';
 import 'package:flashlate/services/lang_local_storage_service.dart';
+import 'package:flashlate/utils/supported_languages.dart';
 import 'package:flutter/material.dart';
 import 'package:flashlate/services/translation_service.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
+import '../services/database/conjugations.dart';
 import '../services/local_storage_service.dart';
+import '../widgets/current_deck_widget.dart';
 import '../widgets/lang_drop_button_widget.dart';
 import '../widgets/app_bar_main_widget.dart';
 
@@ -35,15 +38,7 @@ class _MainPageState extends State<MainPage> {
   List<String> dropdownItems = [];
   List<String> oldTargetWordList = [];
   List<Map<String, dynamic>> verbDictsInTargetText = [];
-  List<String> langDropDownItems = [
-    "Deutsch",
-    "Español",
-    "English",
-    "Français",
-    "Polski",
-    "Português",
-    "Italiano"
-  ];
+
   String currentDropdownValue = "";
   String currentTargetValueLang = "Español";
   String currentSourceValueLang = "Deutsch";
@@ -53,6 +48,8 @@ class _MainPageState extends State<MainPage> {
   bool speakSlowTarget = false;
 
   Map<String, dynamic>? conjugationResult;
+
+  get translationLanguages => SupportedLanguages.translationLanguages;
 
   @override
   void initState() {
@@ -116,25 +113,10 @@ class _MainPageState extends State<MainPage> {
   }
 
   Future<void> loadDropdownLangValuesFromPreferences() async {
-    String? currentSourceLang =
-        await LangLocalStorageService.getLanguage("source");
-    if (currentSourceLang == null) {
-      currentSourceLang = langDropDownItems[0];
-      await LangLocalStorageService.setLanguage(
-          "source", currentSourceLang); // like Español
-    }
-    String? currentTargetLang =
-        await LangLocalStorageService.getLanguage("target");
-    if (currentTargetLang == null) {
-      currentTargetLang = langDropDownItems[1];
-      await LangLocalStorageService.setLanguage(
-          "target", currentTargetLang); // like Español
-    }
-
+    var languages = await LocalStorageService.loadDropdownLangValuesFromPreferences(translationLanguages, true);
     setState(() {
-      // Update the state with the fetched items
-      currentTargetValueLang = currentTargetLang!;
-      currentSourceValueLang = currentSourceLang!;
+      currentSourceValueLang = languages["sourceLang"]!;
+      currentTargetValueLang = languages["targetLang"]!;
     });
   }
 
@@ -266,7 +248,7 @@ class _MainPageState extends State<MainPage> {
         }
       }
       Map<String, dynamic>? conjugations =
-          await DatabaseService.queryConjugation(word, currentTargetValueLang);
+          await Conjugations.queryConjugation(word, currentTargetValueLang);
       if (conjugations != null) {
         if (conjugations.isNotEmpty) {
           debugPrint("conjugations found: ${conjugations["conjugations"]["gptTranslation"]}");
@@ -332,91 +314,19 @@ class _MainPageState extends State<MainPage> {
                     const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                 child: Column(
                   children: [
-                    Container(
-                      height: 24,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).primaryColor,
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(10.0),
-                          // Round only the top-left corner
-                          topRight: Radius.circular(
-                              10.0), // Round only the top-right corner
-                        ), // Make the container round
-                      ),
-
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      // Adjust horizontal padding as needed
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          icon: const Icon(null // Make the icon transparent
-                              ),
-                          borderRadius:
-                              const BorderRadius.all(Radius.circular(8)),
-                          dropdownColor: Theme.of(context).primaryColor,
-                          // isExpanded: true,
-                          value: currentDropdownValue.isEmpty
-                              ? (dropdownItems.isNotEmpty
-                                  ? dropdownItems[0]
-                                  : null)
-                              : currentDropdownValue,
-
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              currentDropdownValue = newValue!;
-                              LocalStorageService.setCurrentDeck(newValue);
-                            });
-                          },
-                          selectedItemBuilder: (BuildContext context) {
-                            return dropdownItems.map<Widget>((String item) {
-                              return Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    Text(
-                                      item,
-                                      style: const TextStyle(
-                                        fontFamily: 'AvertaStd',
-                                        // Specify the font family name
-                                        fontWeight: FontWeight.w700,
-                                        color: Colors.white,
-                                        // Text color of selected item
-                                        fontSize:
-                                            18, // Font size of selected item
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ],
-                                ),
-                              );
-                            }).toList();
-                          },
-                          items: dropdownItems.map<DropdownMenuItem<String>>(
-                            (String value) {
-                              return DropdownMenuItem<String>(
-                                value: value,
-                                child: Center(
-                                  // Center the text within each item
-                                  child: Text(
-                                    value,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontFamily: 'AvertaStd',
-                                      // Specify the font family name
-                                      fontWeight: FontWeight.w700,
-                                      // Text color of selected item
-                                      fontSize: 18,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                              );
-                            },
-                          ).toList(),
-                        ),
-                      ),
+                    // current deck dropdown
+                    CurrentDeckWidget(
+                      dropdownItems: dropdownItems,
+                      currentDropdownValue: currentDropdownValue,
+                      onDeckChanged: (newValue) {
+                        setState(() {
+                          currentDropdownValue = newValue;
+                          // Additional logic if needed when the deck is changed
+                        });
+                      },
                     ),
 
-                    // first box
+                    // first container
                     Container(
                       decoration: const BoxDecoration(
                         borderRadius: BorderRadius.only(
@@ -576,7 +486,7 @@ class _MainPageState extends State<MainPage> {
                                 child: Container(
                                   color: Colors.white,
                                   child: LangDropButtonWidget(
-                                    items: langDropDownItems,
+                                    items: translationLanguages,
                                     value: currentSourceValueLang,
                                     onChanged: (String? newValue) {
                                       // Handle the selected value here
@@ -606,7 +516,7 @@ class _MainPageState extends State<MainPage> {
                                     targetTextEditingController.text.isNotEmpty)
                                 ? () async {
                                     // Your button's onPressed code here...
-                                    final databaseService = DatabaseService();
+                                    final databaseService = PersonalDecks();
                                     // add deckName to deck list
                                     String deckName = await LocalStorageService
                                         .getCurrentDeck();
@@ -724,7 +634,7 @@ class _MainPageState extends State<MainPage> {
                                   top: 5,
                                   left: 15,
                                   child: LangDropButtonWidget(
-                                    items: langDropDownItems,
+                                    items: translationLanguages,
                                     value: currentTargetValueLang,
                                     onChanged: (String? newValue) {
                                       // Handle the selected value here

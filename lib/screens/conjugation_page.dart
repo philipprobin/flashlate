@@ -1,8 +1,9 @@
-import 'package:flashlate/services/database_service.dart';
+import 'package:flashlate/services/database/personal_decks.dart';
 import 'package:flutter/material.dart';
 import 'package:loading_skeleton_niu/loading_skeleton.dart';
 
 import '../services/cloud_function_service.dart';
+import '../services/database/conjugations.dart';
 import 'main_page..dart';
 
 class ConjugationPage extends StatelessWidget {
@@ -47,7 +48,7 @@ class ConjugationPage extends StatelessWidget {
                 fontWeight: FontWeight.w700,
               ),
             ),
-            (args.verbConjugations?["conjugations"]["gptTranslation"]?[DatabaseService.languageMap[args.sourceLang]] == null)?
+            (args.verbConjugations?["conjugations"]["gptTranslation"]?[Conjugations.languageMap[args.sourceLang]] == null)?
             FutureBuilder<String>(
               future: CloudFunctionService.get_gpt_translations(args.verbConjugations?["infinitive"], args.sourceLang, args.lang),
               builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
@@ -78,7 +79,7 @@ class ConjugationPage extends StatelessWidget {
             ) :
 
             Text(
-              args.verbConjugations?["conjugations"]["gptTranslation"][DatabaseService.languageMap[args.sourceLang]],
+              args.verbConjugations?["conjugations"]["gptTranslation"][Conjugations.languageMap[args.sourceLang]],
               style: TextStyle(
                 fontSize: 18,
                 fontStyle: FontStyle.italic,

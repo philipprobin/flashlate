@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/database_service.dart';
+import '../services/database/personal_decks.dart';
 import '../services/local_storage_service.dart';
 import '../widgets/number_container_widget.dart';
 
@@ -10,7 +10,7 @@ class PracticePage extends StatefulWidget {
 
 class _PracticePageState extends State<PracticePage> {
   List<Map<String, dynamic>> userDeck = [];
-  final databaseService = DatabaseService();
+  final databaseService = PersonalDecks();
   PageController pageController = PageController(initialPage: 0);
   int currentIndex = 0;
   bool showFrontSide = true;
