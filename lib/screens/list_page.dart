@@ -5,6 +5,7 @@ import 'package:loading_skeleton_niu/loading_skeleton.dart';
 import 'package:puppeteer/protocol/page.dart';
 import '../models/core/deck.dart';
 import '../services/database/personal_decks.dart';
+import '../services/lang_local_storage_service.dart';
 import '../services/local_storage_service.dart';
 import '../widgets/anim_search_bar_widget.dart';
 import '../widgets/category_tile_widget.dart';
@@ -56,6 +57,7 @@ class _ListPageState extends State<ListPage> {
         fetchedCategoryWidgets = categoryWidgets;
       });
     });*/
+    loadDropdownLangValuesFromPreferences();
     _cacheDecks();
   }
 
@@ -65,12 +67,11 @@ class _ListPageState extends State<ListPage> {
   }
 
   Future<void> loadDropdownLangValuesFromPreferences() async {
-    var languages =
-        await LocalStorageService.loadDropdownLangValuesFromPreferences(
-            communityLanguages, true);
+    var sourceLang = await LangLocalStorageService.getLanguage("sourceCommunity")?? currentSourceValueLang;
+    var targetLang = await LangLocalStorageService.getLanguage("targetCommunity")?? currentTargetValueLang;
     setState(() {
-      currentSourceValueLang = languages["sourceLang"]!;
-      currentTargetValueLang = languages["targetLang"]!;
+      currentSourceValueLang = sourceLang;
+      currentTargetValueLang = targetLang;
     });
   }
 
@@ -165,9 +166,6 @@ class _ListPageState extends State<ListPage> {
   }
 
   Future<List<CategoryTileWidget>> _fetchCommunityDecks() async {
-    if (_cachedCommunityDecks != null) {
-      return _cachedCommunityDecks!;
-    }
 
     String? sourceCode =
         SupportedLanguages.languageMap[currentSourceValueLang]; // de
@@ -376,6 +374,9 @@ class _ListPageState extends State<ListPage> {
                                 // Handle the selected value here
                                 setState(() {
                                   currentSourceValueLang = newValue!;
+                                  LangLocalStorageService.setLanguage(
+                                      "sourceCommunity", newValue);
+                                  _fetchCommunityDecks();
                                 });
                               },
                             ),
@@ -387,6 +388,9 @@ class _ListPageState extends State<ListPage> {
                                 // Handle the selected value here
                                 setState(() {
                                   currentTargetValueLang = newValue!;
+                                  LangLocalStorageService.setLanguage(
+                                      "targetCommunity", newValue);
+                                  _fetchCommunityDecks();
                                 });
                               },
                             ),

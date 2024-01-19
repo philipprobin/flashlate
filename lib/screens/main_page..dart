@@ -113,10 +113,25 @@ class _MainPageState extends State<MainPage> {
   }
 
   Future<void> loadDropdownLangValuesFromPreferences() async {
-    var languages = await LocalStorageService.loadDropdownLangValuesFromPreferences(translationLanguages, true);
+    String? currentSourceLang =
+    await LangLocalStorageService.getLanguage("source");
+    if (currentSourceLang == null) {
+      currentSourceLang = translationLanguages[0];
+      await LangLocalStorageService.setLanguage(
+          "source", currentTargetValueLang); // like Español
+    }
+    String? currentTargetLang =
+    await LangLocalStorageService.getLanguage("target");
+    if (currentTargetLang == null) {
+      currentTargetLang = translationLanguages[1];
+      await LangLocalStorageService.setLanguage(
+          "target", currentSourceValueLang); // like Español
+    }
+
     setState(() {
-      currentSourceValueLang = languages["sourceLang"]!;
-      currentTargetValueLang = languages["targetLang"]!;
+      // Update the state with the fetched items
+      currentTargetValueLang = currentTargetLang!;
+      currentSourceValueLang = currentSourceLang!;
     });
   }
 
