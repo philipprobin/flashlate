@@ -2,13 +2,14 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flashlate/services/database_service.dart';
+import 'package:flashlate/services/database/personal_decks.dart';
 import 'package:flashlate/services/synchronize_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../screens/main_page..dart';
+import 'database/auth.dart';
 
 class AuthenticationService extends StatefulWidget {
   const AuthenticationService({Key? key}) : super(key: key);
@@ -46,8 +47,19 @@ class _AuthenticationServiceState extends State<AuthenticationService> {
   }
 
   Future<void> checkAndSignInWithApple() async {
-    UserCredential userCredential = await DatabaseService.signupWithApple();
-    _createUserDoc(userCredential);
+    User? user = _auth.currentUser;
+
+    if (user == null) {
+      try {
+        UserCredential userCredential = await Auth.signupWithApple();
+        _createUserDoc(userCredential);
+      } catch (e) {
+        debugPrint('Apple Sign-In Error: $e');
+      }
+    }
+    setState(() {
+      SynchronizeService.writeDbToLocal();
+    });
   }
 
   Future<void> _createUserDoc(UserCredential userCredential) async {

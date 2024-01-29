@@ -1,16 +1,23 @@
-import 'package:flashlate/services/database_service.dart';
+import 'package:flashlate/services/database/personal_decks.dart';
 import 'package:flashlate/services/local_storage_service.dart';
 import 'package:flashlate/widgets/word_tile_widget.dart';
 import 'package:flutter/material.dart';
 
 typedef DeleteDeckCallback = void Function(String deckName);
+typedef DownloadDeckCallback = void Function(String deckName);
 
 class CategoryTileWidget extends StatefulWidget {
   final String categoryName;
   final List<WordTileWidget> words;
-  final DeleteDeckCallback onDeleteDeck;
+  final DeleteDeckCallback? onDeleteDeck;
 
-  const CategoryTileWidget(this.categoryName, this.words, this.onDeleteDeck, {super.key});
+  final bool hasDelete;
+  final bool hasDownload;
+  final DownloadDeckCallback? onDownloadDeck;
+
+  const CategoryTileWidget(this.categoryName, this.words, this.onDeleteDeck,
+      this.hasDelete, this.hasDownload, this.onDownloadDeck,
+      {super.key});
 
   @override
   _CategoryTileState createState() => _CategoryTileState();
@@ -18,7 +25,6 @@ class CategoryTileWidget extends StatefulWidget {
 
 class _CategoryTileState extends State<CategoryTileWidget> {
   bool _isExpanded = false;
-  bool _isSelectedDeck = false;
   List<WordTileWidget> _currentWords = [];
 
   @override
@@ -46,14 +52,11 @@ class _CategoryTileState extends State<CategoryTileWidget> {
             onDeleteDeckChild: (title) {
               // Call onDeleteDeck here with the title of the tile
               print('Delete Deck: $title');
-              widget.onDeleteDeck(title);
-
+              widget.onDeleteDeck!(title);
             },
-            onLongPress: () {
-              LocalStorageService.setCurrentDeck(widget.categoryName);
-              setState(() {
-                _isSelectedDeck = true;
-              });
+            onDownloadDeckChild: (title) {
+              print('Download Deck build CategoryTile: $title');
+              widget.onDownloadDeck!(title);
             },
             children: _currentWords.map((wordWidget) {
               return WordTileWidget(
@@ -62,8 +65,11 @@ class _CategoryTileState extends State<CategoryTileWidget> {
                 onDelete: () {
                   _removeWord(wordWidget);
                 },
+                hasDelete: widget.hasDelete,
               );
             }).toList(),
+            hasDownload: widget.hasDownload,
+            hasDelete: widget.hasDelete,
           ),
         ),
         Container(
@@ -80,14 +86,14 @@ class _CategoryTileState extends State<CategoryTileWidget> {
     await LocalStorageService.deleteCardFromLocalDecks(
         widget.categoryName, {wordWidget.word: wordWidget.translation});
 
-
-    bool dbResult = await DatabaseService.deleteCard(
+    bool dbResult = await PersonalDecks.deleteCard(
         widget.categoryName, {wordWidget.word: wordWidget.translation});
-    debugPrint("database removal successfull $dbResult");
+    debugPrint("database removal successfully $dbResult");
 
     // You can also add logic here to update your data source or perform any other necessary actions
   }
 }
+
 Widget customExpansionTile({
   required String title,
   required List<Widget> children,
@@ -95,6 +101,9 @@ Widget customExpansionTile({
   Function(bool)? onExpansionChanged,
   Function()? onLongPress,
   Function(String)? onDeleteDeckChild,
+  Function(String)? onDownloadDeckChild,
+  required bool hasDownload, // Added hasDownload parameter
+  required bool hasDelete, // Added hasDelete parameter
 }) {
   return GestureDetector(
     onLongPress: onLongPress,
@@ -133,21 +142,50 @@ Widget customExpansionTile({
                     Icons.more_vert,
                     color: Colors.black,
                   ),
-                  itemBuilder: (BuildContext context) =>
-                  <PopupMenuEntry<String>>[
-                    PopupMenuItem<String>(
-                      value: 'deleteDeck',
-                      child: Container(
-                        color: Colors.white,
-                        child: Text('Delete Deck'),
-                      ),
-                    ),
-                  ],
+                  itemBuilder: (BuildContext context) {
+                    List<PopupMenuEntry<String>> menuItems = [];
+                    if (hasDelete) {
+                      menuItems.add(
+                        PopupMenuItem<String>(
+                          value: 'deleteDeck',
+                          child: Container(
+                            color: Colors.white,
+                            child: Text('Delete Deck'),
+                          ),
+                        ),
+                      );
+                    }
+                    // Conditionally add a download item
+                    if (hasDownload) {
+                      menuItems.add(
+                        PopupMenuItem<String>(
+                          value: 'downloadDeck',
+                          child: Container(
+                            color: Colors.white,
+                            child: Text('Download Deck'),
+                          ),
+                        ),
+                      );
+                    }
+                    return menuItems;
+                  },
                   onSelected: (String value) {
-                    if (value == 'deleteDeck' && onDeleteDeckChild != null) {
-                      onDeleteDeckChild(title); // Pass the title to the callback
+                    switch (value) {
+                      case 'deleteDeck':
+                        if (onDeleteDeckChild != null) {
+                          onDeleteDeckChild(title);
+                        }
+                        break;
+                      case 'downloadDeck':
+                        if (onDownloadDeckChild != null) {
+                          onDownloadDeckChild(title);
+                        }
+                        break;
+                      default:
+                      // Handle other cases or do nothing
                     }
                   },
+
                 ),
               )
             ],
@@ -166,4 +204,3 @@ Widget customExpansionTile({
     ),
   );
 }
-

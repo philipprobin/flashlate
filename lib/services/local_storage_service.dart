@@ -2,6 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
+import 'lang_local_storage_service.dart';
+
 class LocalStorageService {
   static const String _currentDeckKey = 'currentDeck';
 
@@ -105,7 +107,7 @@ class LocalStorageService {
 
     // Save the updated deck names list to shared preferences
     prefs.setStringList("decks", encodedDeck);
-    debugPrint("addDeck called");
+
     return deckName;
   }
 
@@ -159,19 +161,16 @@ class LocalStorageService {
 
   static Future<void> deleteCardFromLocalDecks(
       String deckName, Map<String, dynamic> dict) async {
-    List<String> listsToDelete = [
-      deckName,
-      "pRaCtIcEmOde-$deckName",
-      "rEvIeWDeCk-$deckName"
-    ];
+
+
+    List<String> listsToDelete = [deckName, "pRaCtIcEmOde-$deckName","rEvIeWDeCk-$deckName"];
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
     int currentIndex = await LocalStorageService.getIndex("iNdEx-$deckName");
-    bool isReviewMode =
-        await LocalStorageService.getReviewMode("rEvIeWmOde-$deckName");
+    bool isReviewMode = await LocalStorageService.getReviewMode("rEvIeWmOde-$deckName");
 
-    for (String listName in listsToDelete) {
+    for(String listName in listsToDelete){
       // Check if the SharedPreferences entry with the listName exists
       if (!prefs.containsKey(listName)) {
         continue; // The deck doesn't exist, so nothing to delete
@@ -194,8 +193,7 @@ class LocalStorageService {
 
       for (int i = 0; i < deck.length; i++) {
         // debugPrint("Modus: $listName ${deck[i].toString()} == ${dict.toString()} || ${deck[i]["translation"].toString()} == ${dict.toString()}");
-        if (deck[i].toString() == dict.toString() ||
-            deck[i]["translation"].toString() == dict.toString()) {
+        if (deck[i].toString() == dict.toString() || deck[i]["translation"].toString() == dict.toString()) {
           indexToDelete = i;
           debugPrint("word deleted in mode $listName");
           break;
@@ -206,18 +204,16 @@ class LocalStorageService {
       // what happens if card is at last place or only card
 
       // reset current index for practice page
-      if (listName.contains("rEvIeWDeCk") && isReviewMode) {
-        if (indexToDelete <= currentIndex) {
+      if (listName.contains("rEvIeWDeCk") && isReviewMode ) {
+        if (indexToDelete  <= currentIndex){
           //what happends if only one in deck?
-          await LocalStorageService.setIndex(
-              "iNdEx-$deckName", currentIndex - 1);
+          await LocalStorageService.setIndex("iNdEx-$deckName", currentIndex-1 );
         }
       }
-      if (listName.contains("pRaCtIcEmOde") && !isReviewMode) {
-        if (indexToDelete <= currentIndex) {
+      if (listName.contains("pRaCtIcEmOde") && !isReviewMode ) {
+        if (indexToDelete  <= currentIndex){
           //what happends if only one in deck?
-          await LocalStorageService.setIndex(
-              "iNdEx-$deckName", currentIndex - 1);
+          await LocalStorageService.setIndex("iNdEx-$deckName", currentIndex-1 );
         }
       }
 
@@ -357,7 +353,6 @@ class LocalStorageService {
           await LocalStorageService.fetchLocalDeck(deck);
 
       List<Map<String, dynamic>> cardListOneDeck = [];
-      debugPrint("fetchedLocalDeck: $fetchedLocalDeck");
       for (Map<String, dynamic> card in fetchedLocalDeck) {
         cardListOneDeck.add(cardWithToLearn(card));
       }
@@ -502,8 +497,7 @@ class LocalStorageService {
     await prefs.setStringList(deckName, updatedEncodedDeck);
   }
 
-  static Future<List<Map<String, dynamic>>> getPracticeDeck(
-      String deckName) async {
+  static Future<List<Map<String, dynamic>>> getPracticeDeck(String deckName) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     // Define the keys for the original deck and practice mode deck.
     final String originalDeckKey = deckName;
@@ -511,37 +505,31 @@ class LocalStorageService {
 
     // Check if the practice mode deck already exists.
     bool practiceModeDeckExists = prefs.containsKey(practiceModeDeckKey);
-    bool practiceDeckIsEmpty =
-        await LocalStorageService.checkDeckIsEmpty(practiceModeDeckKey);
+    bool practiceDeckIsEmpty = await LocalStorageService.checkDeckIsEmpty(practiceModeDeckKey);
     // If it doesn't exist, create it by copying the original deck.
     if (!practiceModeDeckExists || practiceDeckIsEmpty) {
       // Retrieve the original deck from shared preferences.
-      final List<String>? originalDeckJsonList =
-          prefs.getStringList(originalDeckKey);
+      final List<String>? originalDeckJsonList = prefs.getStringList(originalDeckKey);
 
       if (originalDeckJsonList != null) {
         // Parse the original deck data from the list of JSON strings.
         final List<Map<String, dynamic>> originalDeckData = originalDeckJsonList
-            .map(
-                (jsonString) => json.decode(jsonString) as Map<String, dynamic>)
+            .map((jsonString) => json.decode(jsonString) as Map<String, dynamic>)
             .toList();
 
         // Add the 'translation' and 'toLearn' keys to each entry in the practice mode deck.
-        final List<Map<String, dynamic>> transformedPracticeModeDeck =
-            originalDeckData
-                .map((entry) => {
-                      'translation': entry,
-                      'toLearn': true,
-                    })
-                .toList();
+        final List<Map<String, dynamic>> transformedPracticeModeDeck = originalDeckData
+            .map((entry) => {
+          'translation': entry,
+          'toLearn': true,
+        })
+            .toList();
 
         // Store the transformed practice mode deck as a list of JSON strings.
-        final List<String> practiceModeDeckJsonList =
-            transformedPracticeModeDeck
-                .map((data) => jsonEncode(data))
-                .toList();
-        await prefs.setStringList(
-            practiceModeDeckKey, practiceModeDeckJsonList);
+        final List<String> practiceModeDeckJsonList = transformedPracticeModeDeck
+            .map((data) => jsonEncode(data))
+            .toList();
+        await prefs.setStringList(practiceModeDeckKey, practiceModeDeckJsonList);
       } else {
         // Handle the case when the original deck doesn't exist.
         throw Exception("The original deck '$deckName' doesn't exist.");
@@ -549,18 +537,42 @@ class LocalStorageService {
     }
 
     // Retrieve and return the practice mode deck as a list of maps.
-    final List<String>? practiceModeDeckJsonList =
-        prefs.getStringList(practiceModeDeckKey);
+    final List<String>? practiceModeDeckJsonList = prefs.getStringList(practiceModeDeckKey);
     if (practiceModeDeckJsonList != null) {
-      final List<Map<String, dynamic>> practiceModeDeckData =
-          practiceModeDeckJsonList
-              .map((jsonString) =>
-                  json.decode(jsonString) as Map<String, dynamic>)
-              .toList();
+      final List<Map<String, dynamic>> practiceModeDeckData = practiceModeDeckJsonList
+          .map((jsonString) => json.decode(jsonString) as Map<String, dynamic>)
+          .toList();
       return practiceModeDeckData;
     } else {
       // Handle the case when the practice mode deck doesn't exist.
       throw Exception("The practice mode deck for '$deckName' doesn't exist.");
     }
   }
+
+  static Future<Map<String, String>> loadDropdownLangValuesFromPreferences(List<String> translationLanguages, bool setLanguages) async {
+
+    String? currentSourceLang = await LangLocalStorageService.getLanguage("source");
+    if (translationLanguages.isNotEmpty) {
+      currentSourceLang = translationLanguages[0];
+      if (setLanguages)
+      await LangLocalStorageService.setLanguage("source", currentSourceLang);
+    }
+
+    String? currentTargetLang = await LangLocalStorageService.getLanguage("target");
+    if (translationLanguages.length > 1) {
+      currentTargetLang = translationLanguages[1];
+      if(setLanguages)
+      await LangLocalStorageService.setLanguage("target", currentTargetLang);
+    }
+
+    return {
+      "sourceLang": currentSourceLang ?? translationLanguages[0],
+      "targetLang": currentTargetLang ?? translationLanguages[1]
+    };
+  }
+
+
+
+
 }
+

@@ -19,16 +19,21 @@ class _LangDropButtonWidgetState extends State<LangDropButtonWidget> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      /*decoration: BoxDecoration(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            // color: Colors.grey.withOpacity(0.5),
+            color: Colors.black.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 3,
+            offset: Offset(0, 1), // changes position of shadow
+          ),
+        ],
         borderRadius: const BorderRadius.all(
           Radius.circular(8),
         ),
-        border: Border.all(
-          color: Colors.grey, // Border color
-          width: 0.5,          // Border width
-          style: BorderStyle.solid, // Border style: solid, dashed, etc.
-        ),
-      ),*/
+      ),
       width: 100,
       height: 35,
       child: DropdownButtonHideUnderline(

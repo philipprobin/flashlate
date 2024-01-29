@@ -1,10 +1,11 @@
 import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flashlate/services/database_service.dart';
+import 'package:flashlate/services/database/personal_decks.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import '../services/database/auth.dart';
 import '../services/synchronize_service.dart';
 
 class AccountButton extends StatefulWidget {
@@ -93,20 +94,12 @@ class _AccountButtonState extends State<AccountButton> {
                     await _auth.signOut(); // Sign out user
                   },
                 ),
-              ListTile(
-                leading: Icon(Icons.delete),
-                title: Text('Delete App Account'),
-                onTap: () async {
-                  Navigator.pop(context); // Close the bottom sheet
-                  // Add your logic here to delete the app account
-                },
-              ),
               if (_auth.currentUser == null && Platform.isIOS)
                 ListTile(
-                  leading: Icon(Icons.delete),
+                  leading: Icon(Icons.login),
                   title: Text('Sign In with Apple'),
                   onTap: () async {
-                    DatabaseService.signupWithApple();
+                    Auth.signupWithApple();
                     Navigator.pop(context); // Close the bottom sheet
                     // Add your logic here to delete the app account
                   },

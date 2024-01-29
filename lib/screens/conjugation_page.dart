@@ -1,5 +1,9 @@
+import 'package:flashlate/services/database/personal_decks.dart';
 import 'package:flutter/material.dart';
+import 'package:loading_skeleton_niu/loading_skeleton.dart';
 
+import '../services/cloud_function_service.dart';
+import '../services/database/conjugations.dart';
 import 'main_page..dart';
 
 class ConjugationPage extends StatelessWidget {
@@ -17,7 +21,7 @@ class ConjugationPage extends StatelessWidget {
     final args =
     ModalRoute.of(context)!.settings.arguments as ConjugationArguments;
 
-    debugPrint("verbConjugations --------${args.verbConjugations}");
+    debugPrint("gptTranslation --------${args.verbConjugations?["conjugations"]["gptTranslation"]}");
     return Scaffold(
       appBar: AppBar(
         elevation: 0.0,
@@ -44,8 +48,38 @@ class ConjugationPage extends StatelessWidget {
                 fontWeight: FontWeight.w700,
               ),
             ),
+            (args.verbConjugations?["conjugations"]["gptTranslation"]?[Conjugations.languageMap[args.sourceLang]] == null)?
+            FutureBuilder<String>(
+              future: CloudFunctionService.get_gpt_translations(args.verbConjugations?["infinitive"], args.sourceLang, args.lang),
+              builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return ClipRRect(
+                    // create border circular radius
+                    borderRadius: BorderRadius.circular(4),
+                    child: LoadingSkeleton(
+                      width: 100,
+                      height: 18,
+                      colors: [Colors.amber, Colors.purpleAccent, Colors.amber],
+                    ),
+                ); // Show a loading indicator.
+                } else if (snapshot.hasError) {
+                  return Text('Error: ${snapshot.error}');
+                } else {
+                  return Text(
+                    snapshot.data ?? 'No translation available',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontStyle: FontStyle.italic,
+                      fontWeight: FontWeight.w100,
+                      color: Colors.grey[600],
+                    ),
+                  );
+                }
+              },
+            ) :
+
             Text(
-              args.verbConjugations?["translations"] ?? "",
+              args.verbConjugations?["conjugations"]["gptTranslation"][Conjugations.languageMap[args.sourceLang]],
               style: TextStyle(
                 fontSize: 18,
                 fontStyle: FontStyle.italic,

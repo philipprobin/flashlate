@@ -1,51 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
-import 'dart:convert';
 
+class PersonalDecks {
 
-import 'package:flutter/services.dart';
-import 'package:sign_in_with_apple/sign_in_with_apple.dart';
-
-class DatabaseService {
-
-  static Map<String, String> languageMap = {
-    "Deutsch": "de",
-    "English": "en",
-    "Español": "es",
-    "Français" : "fr",
-    "Polski" : "pl",
-    "Português" : "pt",
-    "Italiano" : "it"
-  };
-
-  static Map<String, List<String>> verbSuffixes = {
-    "es": ['ar', 'er', 'ir'],
-    "de": ['en'],
-  };
-
-
-  static Future<UserCredential> signupWithApple() async {
-    final credential = await SignInWithApple.getAppleIDCredential(
-      scopes: [
-        AppleIDAuthorizationScopes.email,
-        AppleIDAuthorizationScopes.fullName,
-      ],
-    );
-
-    print(credential);
-
-    print(credential.authorizationCode);
-    final signInCredential = OAuthProvider("apple.com").credential(
-      idToken: credential.identityToken!,
-      accessToken: credential.authorizationCode,
-    );
-    final userCredential = await FirebaseAuth.instance.signInWithCredential(signInCredential);
-
-    print(userCredential.user);
-    return userCredential;
-  }
   static Future<DocumentReference<Map<String, dynamic>>?>
       get _userDocRef async {
     final user = FirebaseAuth.instance.currentUser;
@@ -208,107 +166,6 @@ class DatabaseService {
     } else {
       debugPrint("Translation not found in the deck");
       return false;
-    }
-  }
-
-  static void addVerbToDB(String verb, Map verbConjugations) {
-    final CollectionReference verbsCollection =
-        FirebaseFirestore.instance.collection('esVerbs');
-
-    // Create a document reference for the verb in the Firestore collection.
-    final DocumentReference verbDocRef = verbsCollection.doc(verb);
-
-    // Upload the verb conjugations map to Firestore.
-    verbDocRef.set({
-      'conjugations': verbConjugations,
-    }).then((_) {
-      print('Verb data added to Firestore for $verb');
-    }).catchError((error) {
-      print('Error uploading data: $error');
-    });
-  }
-
-  static Future<Map<String, dynamic>?> queryConjugation(String conjToFind, String lang) async {
-    // input lang must be supported
-    String countryCode = languageMap[lang]!;
-    String? countryCodeCap = countryCode.toUpperCase();
-    // Initialize Firebase with your service account credentials
-    debugPrint("conjToFind --$conjToFind--");
-
-    final CollectionReference collectionRef =
-        FirebaseFirestore.instance.collection('verbs$countryCodeCap');
-
-    final List<String> filterList = await generateFilters(conjToFind, countryCode);
-
-    // Search by filters
-    for (final filterString in filterList) {
-      final querySnapshot = await collectionRef
-          .where(filterString, isEqualTo: conjToFind)
-          .get();
-
-      if (querySnapshot.docs.isNotEmpty) {
-        final doc = querySnapshot.docs.first;
-        final data = doc.data() as Map<String, dynamic>;
-
-        return {
-          "infinitive": doc.id,
-          "path": filterString,
-          "input": conjToFind,
-          "conjugations": data,
-        };
-      }
-    }
-
-    // Look for infinitive
-    List<String>? suffixes = [];
-    if (verbSuffixes.containsKey(countryCode)){
-      suffixes = verbSuffixes[countryCode];
-    }
-
-    for (final suffix in suffixes!) {
-      if (conjToFind.endsWith(suffix)) {
-        final doc = await collectionRef.doc(conjToFind).get();
-
-        if (doc.exists) {
-          final data = doc.data() as Map<String, dynamic>;
-
-          return {
-            "infinitive": doc.id,
-            "input": conjToFind,
-            "conjugations": data,
-          };
-        }
-      }
-    }
-
-    return null;
-  }
-
-
-  static Future<List<String>> generateFilters(String conjToFind, String countryCode) async {
-    var filters = <String>[];
-    Map<String, dynamic> grammaticalRules =
-        await loadJsonFile("assets/grammar_rules/grammatical_rules_$countryCode.json");
-
-    grammaticalRules.forEach((key, value) {
-      if (conjToFind.endsWith(key)) {
-        if (value is List<dynamic>) {
-          filters.addAll(value.map((item) => item.toString()));
-        }
-      }
-    });
-
-    return filters;
-  }
-
-  static Future<Map<String, dynamic>> loadJsonFile(String assetPath) async {
-    try {
-      final String jsonContent = await rootBundle.loadString(assetPath);
-      final Map<String, dynamic> jsonData = json.decode(jsonContent);
-      return jsonData;
-    } catch (e) {
-      print('Error loading JSON file: $e');
-      return {};
     }
   }
 }

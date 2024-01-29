@@ -1,4 +1,4 @@
-import 'package:flashlate/services/database_service.dart';
+import 'package:flashlate/services/database/personal_decks.dart';
 import 'package:flutter/cupertino.dart';
 
 import 'local_storage_service.dart';
@@ -7,7 +7,7 @@ class SynchronizeService {
 
   static Future<void> writeDbToLocal() async {
     try{
-      Map<String, dynamic> userData = await DatabaseService.fetchUserDoc();
+      Map<String, dynamic> userData = await PersonalDecks.fetchUserDoc();
       List<String> deckNames = await LocalStorageService.getDeckNames();
 
       userData.forEach((deckName, cards) {
