@@ -1,8 +1,6 @@
 import 'package:flashlate/services/database/community_decks.dart';
 import 'package:flashlate/utils/supported_languages.dart';
 import 'package:flutter/material.dart';
-import 'package:loading_skeleton_niu/loading_skeleton.dart';
-import 'package:puppeteer/protocol/page.dart';
 import '../models/core/deck.dart';
 import '../services/database/personal_decks.dart';
 import '../services/lang_local_storage_service.dart';
