@@ -34,6 +34,68 @@ class _AccountButtonState extends State<AccountButton> {
     );
   }
 
+  void _showDeleteAccountConfirmation() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+          title: Text(
+            'Confirm Account Deletion',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Are you sure you want to delete your account? This action cannot be undone.'),
+              SizedBox(height: 16.0),
+              ElevatedButton(
+                onPressed: () {
+                  // Handle account deletion logic here
+                  print('Deleting account');
+                  // Replace with actual account deletion method
+                  try {
+                    final user = _auth.currentUser;
+                    if (user == null) {
+                      debugPrint("User is not logged in");
+                      return;
+                    }
+                    PersonalDecks.deleteUserDoc(user.uid);
+
+                    user.delete();
+                    _auth.signOut();
+                    debugPrint("User account deleted successfully.");
+                      // Handle post-deletion logic (e.g., navigate to login screen)
+
+                  } on FirebaseAuthException catch (e) {
+                    // Handle Firebase auth exceptions
+                    debugPrint("FirebaseAuthException: ${e.message}");
+                    // For example, you might reauthenticate the user if the error code is 'requires-recent-login'
+                  } catch (e) {
+                    // Handle any other exceptions
+                    debugPrint("Error: $e");
+                  }
+                  Navigator.of(context).pop(); // Close the dialog
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).primaryColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                ),
+                child: Text('Delete'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> checkAndSignIn() async {
     User? user = _auth.currentUser;
 
@@ -102,6 +164,17 @@ class _AccountButtonState extends State<AccountButton> {
                     Auth.signupWithApple();
                     Navigator.pop(context); // Close the bottom sheet
                     // Add your logic here to delete the app account
+                  },
+                ),
+
+              if (_auth.currentUser != null) // Show 'Delete Account' option
+                ListTile(
+                  leading: Icon(Icons.delete),
+                  title: Text('Delete Account'),
+                  onTap: () {
+                    Navigator.pop(context); // Close the bottom sheet
+
+                    _showDeleteAccountConfirmation(); // Show confirmation popup
                   },
                 ),
             ],

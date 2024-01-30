@@ -43,7 +43,7 @@ class CommunityDeckListWidget extends StatelessWidget {
   }
 
   Widget _emptyDataView() {
-    return Center(child: Text('Coming soon!.'));
+    return Center(child: Text('Coming soon!'));
   }
 
   Map<String, List<CategoryTileWidget>> _groupData(List<CategoryTileWidget>? data) {

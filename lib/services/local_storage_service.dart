@@ -532,7 +532,8 @@ class LocalStorageService {
         await prefs.setStringList(practiceModeDeckKey, practiceModeDeckJsonList);
       } else {
         // Handle the case when the original deck doesn't exist.
-        throw Exception("The original deck '$deckName' doesn't exist.");
+        print("The original deck '$deckName' doesn't exist.");
+        return [];
       }
     }
 
@@ -545,7 +546,8 @@ class LocalStorageService {
       return practiceModeDeckData;
     } else {
       // Handle the case when the practice mode deck doesn't exist.
-      throw Exception("The practice mode deck for '$deckName' doesn't exist.");
+      debugPrint("The practice mode deck for '$deckName' doesn't exist.");
+      return [];
     }
   }
 

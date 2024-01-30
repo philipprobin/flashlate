@@ -53,6 +53,17 @@ class PersonalDecks {
     return {};
   }
 
+  static Future<void> deleteUserDoc(String docId) async {
+    FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+    try {
+      await firestore.collection('flashcards').doc(docId).delete();
+      print('Document with docId: $docId successfully deleted.');
+    } catch (e) {
+      print('Error deleting document: $e');
+    }
+  }
+
   Future<bool> deleteDeck(String deckName) async {
     final userDocRef = await _userDocRef;
     if (userDocRef == null) {
