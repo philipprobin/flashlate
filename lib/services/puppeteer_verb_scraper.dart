@@ -1,11 +1,11 @@
-/*
+
 import 'dart:convert';
 import 'dart:io';
 import 'package:puppeteer/puppeteer.dart' as pup;
 
-final lang = "spanisch/";
-final filePath = 'lib/spanischVerbs.txt'; // Provide the correct file path
-final fileName = 'verbsESzwei.json';
+final lang = "französisch/";
+final filePath = 'frenchVerbs.txt'; // Provide the correct file path
+final fileName = 'frenchConjugations.json';
 
 void main() async {
   // Launch the Puppeteer browser.
@@ -28,22 +28,38 @@ void main() async {
     counter += 1;
     print("counter $counter");
 
-    await page.goto(half_url + lang + verb);
+    await page.goto(half_url + lang + verb, wait: pup.Until.networkIdle);
+
 
     final elements = await page.$$('div.word-translated-wrap');
 
     print(elements);
 
-    // Call another method from main.
-    /* await searchForVerb(page, "decir");
-    final button = await page.$('#search_button');
-    // Click on the button element.
-    await button.click();
-    // Wait for the page to reload. You can adjust the waiting time as needed.
-    await page.waitForNavigation();*/
+    var sections = await page.$$('.pons.content-box.ft-group');
+    Map<String, Map<String, dynamic>> aggregateVerbMaps = {};
+    // Iterate over all sections and do something with them, for example, printing their inner text
+    for (var section in sections) {
+      final spanElements = await section.$$('span.ft-current-header');
+      for (final spanElement in spanElements) {
+        var moodForm = await spanElement.evaluate('(element) => element.textContent.trim()');
 
-    Map verbMap = await lookForKonjugations(page, timeForms);
-    addVerbToFile(verb, verbMap);
+        // Now you have the text of the span element
+        print("moodForm: " + moodForm); // Do something with the span text
+
+        Map<String, dynamic> verbMap = await lookForKonjugations(section, timeForms) as Map<String, dynamic>;
+
+
+        if (verbMap.isNotEmpty) {
+          // Assuming moodForm is unique for each verbMap and can be used as a key
+          // If moodForm is not unique, you might need a composite key or another unique identifier
+          aggregateVerbMaps[moodForm] = verbMap;
+        }
+      }
+    }
+    if (aggregateVerbMaps.isNotEmpty) {
+      addVerbToFile(verb, aggregateVerbMaps);
+    }
+
   }
   // Close the browser.
   await browser.close();
@@ -130,19 +146,35 @@ List<String> supportedTimeForms() {
       "Futur II",
     ];
   }
+  if (lang == "französisch/") {
+    return [
+      "Présent",
+      "Imparfait",
+      "Passé simple",
+      "Futur simple",
+      "Passé composé",
+      "Plus-que-parfait",
+      "Passé antérieur",
+      "Futur antérieur",
+    ];
+  }
   return [];
 }
 
-Future<Map> lookForKonjugations(pup.Page page, List<String> timeForms) async {
-  var verbDict = {};
+Future<Map<String, dynamic>> lookForKonjugations(pup.ElementHandle section, List<String> timeForms) async {
+  Map<String, dynamic> verbDict = {};
   print("lookForKonjugations");
-  final elements = await page.$$('div.ft-single-table');
+  final elements = await section.$$('div.ft-single-table');
   print(elements.length);
 
   for (final element in elements) {
     try {
       var timeForm = 'empty';
+      var moodForm = 'emptyMood';
       final h3Element = await element.$('h3');
+
+
+
       timeForm =
           await h3Element.evaluate('(element) => element.textContent.trim()');
 
@@ -225,4 +257,3 @@ Future<void> searchForVerb(pup.Page page, String verb) async {
   value = await input.property('value');
   print('Input Element Value: ${await value.jsonValue}');
 }
-*/
