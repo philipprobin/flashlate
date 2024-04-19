@@ -24,9 +24,9 @@ class _LangDropButtonWidgetState extends State<LangDropButtonWidget> {
         boxShadow: [
           BoxShadow(
             // color: Colors.grey.withOpacity(0.5),
-            color: Colors.black.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 3,
+            color: Colors.black.withOpacity(0.2),
+            spreadRadius: 1.5,
+            blurRadius: 1,
             offset: Offset(0, 1), // changes position of shadow
           ),
         ],

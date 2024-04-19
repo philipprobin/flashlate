@@ -1,4 +1,5 @@
 import 'package:flashlate/screens/conjugation_page.dart';
+import 'package:flashlate/services/cloud_function_service.dart';
 import 'package:flashlate/services/database/personal_decks.dart';
 import 'package:flashlate/services/lang_local_storage_service.dart';
 import 'package:flashlate/utils/supported_languages.dart';
@@ -6,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flashlate/services/translation_service.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
+import '../models/core/conjugation/conjugation_result.dart';
 import '../services/database/conjugations.dart';
 import '../services/local_storage_service.dart';
 import '../widgets/current_deck_widget.dart';
@@ -47,7 +49,7 @@ class _MainPageState extends State<MainPage> {
   bool speakSlowSource = false;
   bool speakSlowTarget = false;
 
-  Map<String, dynamic>? conjugationResult;
+  ConjugationResult? conjugationResult;
 
   get translationLanguages => SupportedLanguages.translationLanguages;
 
@@ -114,14 +116,14 @@ class _MainPageState extends State<MainPage> {
 
   Future<void> loadDropdownLangValuesFromPreferences() async {
     String? currentSourceLang =
-    await LangLocalStorageService.getLanguage("source");
+        await LangLocalStorageService.getLanguage("source");
     if (currentSourceLang == null) {
       currentSourceLang = translationLanguages[0];
       await LangLocalStorageService.setLanguage(
           "source", currentTargetValueLang); // like Español
     }
     String? currentTargetLang =
-    await LangLocalStorageService.getLanguage("target");
+        await LangLocalStorageService.getLanguage("target");
     if (currentTargetLang == null) {
       currentTargetLang = translationLanguages[1];
       await LangLocalStorageService.setLanguage(
@@ -161,7 +163,8 @@ class _MainPageState extends State<MainPage> {
     final translation = await translationService.translateText(
         sourceLang, targetLang, textToTranslate);
     if (currentTargetValueLang == "Español" ||
-        currentTargetValueLang == "Deutsch") {
+        currentTargetValueLang == "Deutsch" ||
+        "Français" == currentTargetValueLang) {
       // input in source, translation is forwarded
       checkConjugations(translation);
     }
@@ -177,8 +180,7 @@ class _MainPageState extends State<MainPage> {
       await translationService.speakText(
           textEditingController.text, currentLanguage, speakSlowSource);
       speakSlowSource = !speakSlowSource;
-    }
-    else{
+    } else {
       await translationService.speakText(
           textEditingController.text, currentLanguage, speakSlowTarget);
       speakSlowTarget = !speakSlowTarget;
@@ -200,98 +202,31 @@ class _MainPageState extends State<MainPage> {
     return newWords;
   }
 
-  Future<bool> checkConjugations(String translatedText) async {
-    /*List<String> oldTargetWordList = [];
-    List<Map<String, dynamic>> verbDictsInTargetText = [];*/
+  Future<void> checkForConjugations(String translatedText) async {
+    if (currentTargetValueLang == "Français") {
 
-    // preprocess translatedText
-    List<String> currentTranslatedTextList = translatedText.split(" ");
-    for (int i = 0; i < currentTranslatedTextList.length; i++) {
-      currentTranslatedTextList[i] =
-          currentTranslatedTextList[i].replaceAll(RegExp(r'[.,!?]'), '');
+      final result = await CloudFunctionService.fetchFrenchConjugations(translatedText);
+      // Conjugations.queryConjugations(result, currentSourceValueLang);
     }
-    debugPrint("currentTranslatedTextList: $currentTranslatedTextList");
+  }
 
-    // delete verbs from verbList that are not in translatedText anymore
-    if (verbDictsInTargetText.isNotEmpty) {
-      try{
-      for (Map<String, dynamic> verbDict in verbDictsInTargetText) {
-        String verb = verbDict["input"];
-        if (!currentTranslatedTextList.contains(verb)) {
-          verbDictsInTargetText.remove(verbDict);
-        }
+  void checkConjugations(String translatedText) async {
+    if (currentTargetValueLang == "Français") {
+      ConjugationResult? _conjugationResult = await Conjugations.fetchFrenchConjugations(translatedText, currentTargetValueLang);
+      if (_conjugationResult != null) {
+        setState(() {
+          conjugationResult = _conjugationResult;
+        });
+      } else {
+        setState(() {
+          conjugationResult = null;
+        });
       }
-      }catch(e){
-        debugPrint("error: $e");
-      }
-    }
-
-    // query only new words
-    // use currentTranslatedTextList
-
-    List<String> newWords = findAndReplaceWords(currentTranslatedTextList);
-    for (int i = 0; i < newWords.length; i++) {
-      String word = newWords[i];
-
-      // check for aux verbs in inputfield
-      if (currentTargetValueLang == "Español") {
-        if (word.endsWith("ado") || word.endsWith("ido")) {
-          List<String> auxVerbsEs = [
-            "he",
-            "has",
-            "ha",
-            "hemos",
-            "habéis",
-            "han",
-            "había",
-            "habías",
-            "habíamos",
-            "habíais",
-            "habían"
-          ];
-          // check only one word before mainVerb if its in auxList
-          int index = currentTranslatedTextList.indexOf(word);
-          // word with ado or ido cant be first index
-          if (index > 0) {
-            String wordBeforeVerb = currentTranslatedTextList[index - 1];
-            if (auxVerbsEs.contains(wordBeforeVerb)) {
-              // The word has a suffix "ado" or "ido" and is preceded by an auxiliary verb.
-              // You can perform your desired action here.
-              word = "$wordBeforeVerb $word";
-            }
-          }
-        }
-      }
-      Map<String, dynamic>? conjugations =
-          await Conjugations.queryConjugation(word, currentTargetValueLang);
-      if (conjugations != null) {
-        if (conjugations.isNotEmpty) {
-          debugPrint("conjugations found: ${conjugations["conjugations"]["gptTranslation"]}");
-          verbDictsInTargetText.add(conjugations);
-        }
-      }
-    }
-    // look in firebase
-/*        await CloudFunctionService.fetchSpanishConjugations(
-            translatedText, currentSourceValueLang);*/
-
-    if (verbDictsInTargetText.isNotEmpty) {
-      debugPrint("verbDictsInTargetText: $verbDictsInTargetText");
-      setState(() {
-        conjugationResult = verbDictsInTargetText.last;
-      });
-      return true;
-    } else {
-      setState(() {
-        conjugationResult = null;
-      });
-      return false;
     }
   }
 
   Future<void> translateTargetText(String sourceLang, String targetLang) async {
-    if (currentTargetValueLang == "Español" ||
-        currentTargetValueLang == "Deutsch") {
+    if (currentTargetValueLang == "Français") {
       checkConjugations(textToTranslate);
     }
     final translation = await translationService.translateText(
@@ -796,8 +731,6 @@ class _MainPageState extends State<MainPage> {
                                               ),
                                           onPressed: () {
                                             if (conjugationResult != null) {
-                                              debugPrint(
-                                                  "conjugationResult != null ${conjugationResult!["infinitive"]}");
                                             } else {
                                               debugPrint(
                                                   "conjugationResult == null");
@@ -807,14 +740,16 @@ class _MainPageState extends State<MainPage> {
                                               context,
                                               ConjugationPage.routeName,
                                               arguments: ConjugationArguments(
-                                                  conjugationResult,
-                                                  currentTargetValueLang,
-                                                  currentSourceValueLang),
+                                                conjugationResult!, // Make sure this is a ConjugationResult object
+                                                currentTargetValueLang, // String representing the target language
+                                                currentSourceValueLang, // String representing the source language
+                                              ),
                                             );
+
                                             // Add your button's onPressed functionality here
                                           },
                                           child: Text(
-                                              "Conjugate ${conjugationResult!["infinitive"]}"),
+                                              "Conjugate ${conjugationResult!.infinitive}", style: TextStyle(color: Colors.white),),
                                         )
                                       : Container(),
                                 ),
@@ -843,9 +778,10 @@ class _MainPageState extends State<MainPage> {
 // In this example, create a class that contains both
 // a customizable title and message.
 class ConjugationArguments {
-  final Map<String, dynamic>? verbConjugations;
-  String lang;
-  String sourceLang;
+  final ConjugationResult conjugationResult;
+  final String currentTargetValueLang;
+  final String currentSourceValueLang;
 
-  ConjugationArguments(this.verbConjugations, this.lang, this.sourceLang);
+  ConjugationArguments(this.conjugationResult, this.currentTargetValueLang, this.currentSourceValueLang);
 }
+

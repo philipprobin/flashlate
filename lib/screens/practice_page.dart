@@ -1,7 +1,9 @@
+import 'package:flashlate/widgets/practice/proficiency_button.dart';
 import 'package:flutter/material.dart';
 import '../services/database/personal_decks.dart';
 import '../services/local_storage_service.dart';
-import '../widgets/number_container_widget.dart';
+import '../services/translation_service.dart';
+import '../widgets/practice/counter_row.dart';
 
 class PracticePage extends StatefulWidget {
   @override
@@ -20,6 +22,8 @@ class _PracticePageState extends State<PracticePage> {
   String currentDeck = "";
   bool isReviewMode = false;
 
+  bool speakSlowSource = false;
+
   @override
   void initState() {
     super.initState();
@@ -27,7 +31,8 @@ class _PracticePageState extends State<PracticePage> {
   }
 
   Future<void> _setKnownCardsNumbers(int limitIndex) async {
-    var cardsList = await LocalStorageService.fetchLocalDeck(isReviewMode ? "rEvIeWDeCk-$currentDeck" : "pRaCtIcEmOde-$currentDeck");
+    var cardsList = await LocalStorageService.fetchLocalDeck(
+        isReviewMode ? "rEvIeWDeCk-$currentDeck" : "pRaCtIcEmOde-$currentDeck");
     int trueCount = 0;
     int falseCount = 0;
 
@@ -42,7 +47,6 @@ class _PracticePageState extends State<PracticePage> {
     cardsUnknown = trueCount;
     cardsKnown = falseCount;
   }
-
 
   Future<void> _fetchStoredData() async {
     // download
@@ -65,7 +69,6 @@ class _PracticePageState extends State<PracticePage> {
           await LocalStorageService.fetchLocalDeck("rEvIeWDeCk-$currentDeck");
     }
 
-
     debugPrint("cardsList $cardsList");
 
     // check if all already solved:  all cards are titled with I KNOW, (allSolved)
@@ -76,7 +79,7 @@ class _PracticePageState extends State<PracticePage> {
     }
 
     setState(() {
-      if(fetchedIndex <0){
+      if (fetchedIndex < 0) {
         fetchedIndex = 0;
       }
       pageController = PageController(initialPage: fetchedIndex);
@@ -109,7 +112,8 @@ class _PracticePageState extends State<PracticePage> {
 
     // to show updated knownCards for the last rating
     setState(() {
-      _setKnownCardsNumbers(currentIndex+1);
+      _setKnownCardsNumbers(currentIndex + 1);
+
       /// todo: show front side when swiping
       showFrontSide = true;
     });
@@ -168,104 +172,91 @@ class _PracticePageState extends State<PracticePage> {
             height: statusBarHeight,
             color: Colors.red,
           ),
-          Align(
-            alignment: Alignment.topCenter,
-            child: Padding(
-              padding: const EdgeInsets.only(top: 16.0, left: 16, right: 16),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      NumberContainer(
-                        color: Colors.red,   // Both border and text color
-                        numberValue: cardsUnknown,
-                      ),
-                      Text(
-                        '${currentIndex + 1} / ${userDeck.length}',
-                        style: TextStyle(
-                          fontSize: 20, // Adjust the font size as needed
-                        ),
-                      ),
-                      NumberContainer(
-                        color: Theme.of(context).primaryColor,   // Both border and text color
-                        numberValue: cardsKnown,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+          CounterRow(
+            currentIndex: currentIndex,
+            userDeckLength: userDeck.length,
+            cardsUnknown: cardsUnknown,
+            cardsKnown: cardsKnown,
           ),
           Expanded(
             child: Center(
               child: userDeck.isNotEmpty
                   ? GestureDetector(
-                      onTap: _handleCardTap,
-                      child: PageView.builder(
-                        controller: pageController,
-                        itemCount: userDeck.length,
-                        physics: NeverScrollableScrollPhysics(),
-                        itemBuilder: (context, index) {
-                          return Center(
-                            child: Stack(
-                              children: [
-                                AnimatedSwitcher(
-                                  duration: Duration(milliseconds: 300),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(16.0),
-                                    child: Container(
-                                      key: ValueKey<int>(index),
-                                      height:
-                                          MediaQuery.of(context).size.width *
-                                              0.4,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(10),
+                onTap: _handleCardTap,
+                child: PageView.builder(
+                  controller: pageController,
+                  itemCount: userDeck.length,
+                  physics: NeverScrollableScrollPhysics(),
+                  itemBuilder: (context, index) {
+                    return Center(
+                      child: Stack(
+                        children: [
+                          AnimatedSwitcher(
+                            duration: Duration(milliseconds: 300),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Container(
+                                key: ValueKey<int>(index),
+                                height:
+                                MediaQuery.of(context).size.width *
+                                    0.4,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                alignment: Alignment.center,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.volume_up, color: Colors.black45),
+                                        onPressed: () {
+                                          setState(() {
+                                            // Assuming TranslationService and speakText are accessible
+                                            // You might need to adapt this part to your actual data handling and services
+                                            TranslationService().speakText(
+                                                userDeck[index]["translation"].values.first.toString(),
+                                                "Français",
+                                                speakSlowSource
+                                            );
+                                            speakSlowSource = !speakSlowSource;
+                                          });
+                                        },
                                       ),
-                                      alignment: Alignment.center,
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(16.0),
-                                        child: Text(
-                                          showFrontSide
-                                              ? userDeck[index]["translation"]
-                                                  .keys
-                                                  .first
-                                              : userDeck[index]["translation"]
-                                                  .values
-                                                  .first
-                                                  .toString(),
-                                          style: TextStyle(fontSize: 20),
-                                          textAlign: TextAlign.center,
-                                        ),
+                                      Text(
+                                        showFrontSide
+                                            ? userDeck[index]["translation"].keys.first
+                                            : userDeck[index]["translation"].values.first.toString(),
+                                        style: TextStyle(fontSize: 20),
+                                        textAlign: TextAlign.center,
                                       ),
-                                    ),
+                                    ],
                                   ),
                                 ),
-                                Positioned(
-                                  top: 32, // Adjust the top position as needed
-                                  right:
-                                      32, // Adjust the right position as needed
-                                  child: SizedBox(
-                                    width: 30,
-                                    height: 30,
-                                    child: Icon(
-                                      Icons.touch_app_rounded,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
-                          );
-                        },
+                          ),
+                          Positioned(
+                            top: 32, // Adjust the top position as needed
+                            right:
+                            32, // Adjust the right position as needed
+                            child: SizedBox(
+                              width: 30,
+                              height: 30,
+                              child: Icon(
+                                Icons.touch_app_rounded,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    )
+                    );
+                  },
+                ),
+              )
                   : Text("Add Cards to Deck first..."),
             ),
           ),
@@ -282,50 +273,22 @@ class _PracticePageState extends State<PracticePage> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: OutlinedButton(
-                          onPressed: () {
-                            // Handle the button press.
-                            _showNextCard(true, context);
-                          },
-                          style: ButtonStyle(
-                            side: MaterialStateProperty.all(BorderSide(
-                              color: Color(0xFFe15055), // Outline color
-                              width: 2.0, // Adjust the width as needed
-                            )),
-                            foregroundColor: MaterialStateProperty.all(
-                              Color(0xFFe15055),
-                            ), // Font color
-                          ),
-                          child: Text('I don\'t know'),
-                        ),
-                      ),
+                    // Assuming this is in a build method or another widget.
+                    ProficiencyButton(
+                      text: "I don't know",
+                      color: Color(0xFFe15055), // Adjust this color as needed.
+                      onPressed: () {
+                        _showNextCard(true, context); // Adjust this function as needed.
+                      },
                     ),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: OutlinedButton(
-                          onPressed: () {
-                            // Handle the button press.
-                            _showNextCard(false, context);
-                            //ceck if update worked
-                          },
-                          style: ButtonStyle(
-                            side: MaterialStateProperty.all(BorderSide(
-                              color: Theme.of(context)
-                                  .primaryColor, // Outline color
-                              width: 2.0, // Adjust the width as needed
-                            )),
-                            foregroundColor: MaterialStateProperty.all(
-                              Theme.of(context).primaryColor,
-                            ), // Font color
-                          ),
-                          child: Text('I know'),
-                        ),
-                      ),
-                    ),
+                    ProficiencyButton(
+                      text: "I know",
+                      color: Theme.of(context).primaryColor, // Using the theme's primary color.
+                      onPressed: () {
+                        _showNextCard(false, context); // Adjust this function as needed.
+                      },
+                    )
+
                   ],
                 ),
               ),
@@ -342,6 +305,7 @@ class _PracticePageState extends State<PracticePage> {
       barrierDismissible: false, // Prevent dismissal by tapping outside
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20.0),
           ),
@@ -389,7 +353,10 @@ class _PracticePageState extends State<PracticePage> {
                       borderRadius: BorderRadius.circular(8.0),
                     ),
                   ),
-                  child: Text('Review Cards'),
+                  child: Text('Review Cards', style: TextStyle(
+                    color:
+                    Colors.white, // Low emphasis button
+                  ),),
                 ),
               TextButton(
                 onPressed: () async {
@@ -406,10 +373,10 @@ class _PracticePageState extends State<PracticePage> {
                 style: TextButton.styleFrom(
                   textStyle: TextStyle(
                     color:
-                        Theme.of(context).primaryColor, // Low emphasis button
+                        Colors.white, // Low emphasis button
                   ),
                 ),
-                child: Text('Restart Cards'),
+                child: Text('Restart Cards', style: TextStyle(color: Theme.of(context).indicatorColor),),
               ),
             ],
           ),

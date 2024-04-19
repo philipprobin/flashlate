@@ -5,6 +5,9 @@ import 'package:flashlate/utils/supported_languages.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 
+import '../../models/core/conjugation/conjugation_result.dart';
+import '../cloud_function_service.dart';
+
 class Conjugations {
 
   static get languageMap => SupportedLanguages.languageMap;
@@ -86,6 +89,7 @@ class Conjugations {
     final List<String> filterList =
         await generateFilters(conjToFind, countryCode);
 
+    debugPrint("filterList --$filterList--");
     // Search by filters
     for (final filterString in filterList) {
       final querySnapshot =
@@ -94,7 +98,7 @@ class Conjugations {
       if (querySnapshot.docs.isNotEmpty) {
         final doc = querySnapshot.docs.first;
         final data = doc.data() as Map<String, dynamic>;
-
+        debugPrint("data --$data--");
         return {
           "infinitive": doc.id,
           "path": filterString,
@@ -127,6 +131,51 @@ class Conjugations {
     }
 
     return null;
+  }
+
+  static Future<ConjugationResult?> fetchFrenchConjugations(String translatedText, String language) async {
+    final result = await CloudFunctionService.fetchFrenchConjugations(
+        translatedText);
+
+    if (result != null && result.containsKey('lemmas') &&
+        result['lemmas'].isNotEmpty) {
+      String lastInfinitive = result['lemmas'].last;
+      print("Last infinitive: $lastInfinitive");
+      Map<String, dynamic>? data = await queryConjugations(
+          lastInfinitive, language);
+      if (data != null) {
+        ConjugationResult conjugationResult = ConjugationResult.fromJson(data);
+        return conjugationResult;
+      }
+    }
+    return null;
+  }
+
+  static Future<Map<String, dynamic>?> queryConjugations(String infinitive, String lang) async {
+    String countryCode = languageMap[lang]!;
+    String countryCodeCap = countryCode.toUpperCase();
+    // Initialize Firebase with your service account credentials
+    debugPrint("path: ${'verbs$countryCodeCap'}/$infinitive");
+
+    final CollectionReference collectionRef =
+    FirebaseFirestore.instance.collection('verbs$countryCodeCap');
+
+    try {
+      DocumentSnapshot doc = await collectionRef.doc(infinitive).get(); // Use await to wait for the document to be fetched
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+        return {
+          "infinitive": doc.id,
+          "data": data,
+        };
+      } else {
+        debugPrint('No document found for $infinitive in verbs$countryCodeCap.');
+        return null;
+      }
+    } catch (e) {
+      debugPrint('Error fetching data: $e');
+      return null;
+    }
   }
 
   static Future<List<String>> generateFilters(

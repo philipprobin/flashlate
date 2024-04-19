@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flashlate/services/database/personal_decks.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
 
@@ -72,5 +71,52 @@ class CloudFunctionService {
       print('Error: $error');
       return null;
     }
+  }
+
+  static Future<Map<String, dynamic>?> fetchFrenchConjugations(String verb) async {
+    const endpointUrl = "https://us-central1-flashlate-397020.cloudfunctions.net/spacyVerbRecognizer?verb=";
+
+    final url = Uri.parse("$endpointUrl$verb");
+    final headers = {"Content-Type": "application/json"};
+    final body = json.encode({"verb": verb});
+
+    try {
+      final response = await http.post(url, headers: headers, body: body);
+
+      if (response.statusCode == 200) {
+        // Convert the response to UTF-8
+        final utf8Response = utf8.decode(response.bodyBytes);
+
+        // Parse the JSON
+        final jsonResult = json.decode(utf8Response);
+
+        // Print the JSON result
+        print("jsonresult $jsonResult");
+        return jsonResult;
+      } else {
+        // Handle HTTP error
+        print('HTTP Error: ${response.statusCode}');
+        return null;
+      }
+    } catch (error) {
+      // Handle network or other errors
+      print('Error: $error');
+      return null;
+    }
+  }
+
+
+}
+void main() async {
+  String translatedText = "parler"; // Example verb to fetch conjugations for
+  final result = await CloudFunctionService.fetchFrenchConjugations(
+      translatedText);
+
+  if (result != null && result.containsKey('lemmas') &&
+      result['lemmas'].isNotEmpty) {
+    String lastInfinitive = result['lemmas'].last;
+    print("Last infinitive: $lastInfinitive");
+  } else {
+    print("No lemmas found or error occurred.");
   }
 }

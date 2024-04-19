@@ -3,7 +3,7 @@ import 'card.dart';
 class Deck{
   String deckName;
   List<Card> cards;
-
+  // todo add source and target language
   Deck({
     required this.deckName,
     required this.cards,

@@ -1,8 +1,6 @@
 import 'package:flashlate/services/database/community_decks.dart';
 import 'package:flashlate/utils/supported_languages.dart';
 import 'package:flutter/material.dart';
-import 'package:loading_skeleton_niu/loading_skeleton.dart';
-import 'package:puppeteer/protocol/page.dart';
 import '../models/core/deck.dart';
 import '../services/database/personal_decks.dart';
 import '../services/lang_local_storage_service.dart';
@@ -459,6 +457,7 @@ class _ListPageState extends State<ListPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20.0),
           ),
@@ -497,7 +496,7 @@ class _ListPageState extends State<ListPage> {
                     borderRadius: BorderRadius.circular(8.0),
                   ),
                 ),
-                child: Text('Create'),
+                child: Text('Create', style: TextStyle(color: Colors.white),),
               ),
             ],
           ),
