@@ -1,13 +1,19 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:html/parser.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flashlate/api_key.dart';
+
+import 'package:html/dom.dart' as dom;
+import 'package:flutter/material.dart';
 
 class TranslationService {
   final String apiKey = ApiKey.googleTranslateApiKey;
 
   FlutterTts flutterTts = FlutterTts();
+
+  String lastSpokenText = "";
 
   Map<String, String> languageMap = {
     "Deutsch": "de",
@@ -44,23 +50,33 @@ class TranslationService {
 
     final data = json.decode(response.body);
     debugPrint("other translations ${data}");
-    return data['data']['translations'][0]['translatedText'];
+
+    // Extract the translated text
+    String translatedText = data['data']['translations'][0]['translatedText'];
+
+    // Decode HTML entities
+    var document = parse(translatedText);
+    String? decodedText = dom.DocumentFragment.html(document.body?.text ?? '').text;
+
+    debugPrint("decodedText translations ${decodedText}");
+    return decodedText?? "fail";
   }
 
 
-  Future<void> speakText(String text, String target, bool speakSlow) async {
+  Future<void> speakText(String text, String target) async {
     debugPrint("speakText $text");
     final langCode = ttsMap[target]!;
 
     try {
       double speechRate = 0.5;
-      if (speakSlow) {
+      if (lastSpokenText == text) {
         speechRate = 0.2;
       }
         await flutterTts.setSpeechRate(speechRate);
         await flutterTts.setLanguage(langCode);
         await flutterTts.speak(text);
 
+        lastSpokenText = text;
     } catch (e) {
       print('Error calling flutterTts: $e');
     }

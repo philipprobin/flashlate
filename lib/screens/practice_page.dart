@@ -219,9 +219,7 @@ class _PracticePageState extends State<PracticePage> {
                                             TranslationService().speakText(
                                                 userDeck[index]["translation"].values.first.toString(),
                                                 "Français",
-                                                speakSlowSource
                                             );
-                                            speakSlowSource = !speakSlowSource;
                                           });
                                         },
                                       ),

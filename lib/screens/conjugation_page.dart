@@ -2,11 +2,13 @@ import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:loading_skeleton_niu/loading_skeleton.dart';
 
 import '../models/core/conjugation/conjugation.dart';
 import '../models/core/conjugation/conjugation_result.dart';
 import '../models/core/conjugation/mood.dart';
 import '../models/core/conjugation/tense.dart';
+import '../services/cloud_function_service.dart';
 import '../services/translation_service.dart';
 import 'main_page..dart';
 
@@ -18,7 +20,6 @@ class ConjugationPage extends StatefulWidget {
 }
 
 class _ConjugationPageState extends State<ConjugationPage> {
-  bool speakSlow = false;
 
   @override
   Widget build(BuildContext context) {
@@ -42,6 +43,37 @@ class _ConjugationPageState extends State<ConjugationPage> {
             Text(
               capitalizeFirstLetter(args.conjugationResult.infinitive),
               style: TextStyle(fontSize: 36, fontWeight: FontWeight.w700),
+            ),
+            FutureBuilder<String>(
+              future: CloudFunctionService.get_gpt_translations(args.conjugationResult.infinitive, args.currentSourceValueLang, args.currentTargetValueLang),
+              builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return ClipRRect(
+                    // create border circular radius
+                    borderRadius: BorderRadius.circular(4),
+                    child: LoadingSkeleton(
+                      width: 100,
+                      height: 18,
+                      colors: [Colors.amber, Colors.purpleAccent, Colors.amber],
+                    ),
+                  ); // Show a loading indicator.
+                } else if (snapshot.hasError) {
+                  return Text('Error: ${snapshot.error}');
+                } else {
+                  return Text(
+                    snapshot.data ?? 'No translation available',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontStyle: FontStyle.italic,
+                      fontWeight: FontWeight.w100,
+                      color: Colors.grey[600],
+                    ),
+                  );
+                }
+              },
+            ),
+            Container(
+              height: 16,
             ),
             ..._buildConjugationLists(args.conjugationResult),
           ],
@@ -101,9 +133,7 @@ class _ConjugationPageState extends State<ConjugationPage> {
                     TranslationService().speakText(
                         conjugation.mainVerb,
                         "Français",
-                        speakSlow
                     );
-                    speakSlow = !speakSlow;
                   });
                 },
               ),

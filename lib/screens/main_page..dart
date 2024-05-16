@@ -46,8 +46,6 @@ class _MainPageState extends State<MainPage> {
   String currentSourceValueLang = "Deutsch";
 
   String originalVerb = "";
-  bool speakSlowSource = false;
-  bool speakSlowTarget = false;
 
   ConjugationResult? conjugationResult;
 
@@ -178,12 +176,10 @@ class _MainPageState extends State<MainPage> {
       TextEditingController textEditingController, currentLanguage) async {
     if (currentLanguage == currentSourceValueLang) {
       await translationService.speakText(
-          textEditingController.text, currentLanguage, speakSlowSource);
-      speakSlowSource = !speakSlowSource;
+          textEditingController.text, currentLanguage);
     } else {
       await translationService.speakText(
-          textEditingController.text, currentLanguage, speakSlowTarget);
-      speakSlowTarget = !speakSlowTarget;
+          textEditingController.text, currentLanguage);
     }
   }
 
