@@ -198,31 +198,25 @@ class _MainPageState extends State<MainPage> {
     return newWords;
   }
 
-  Future<void> checkForConjugations(String translatedText) async {
-    if (currentTargetValueLang == "Français") {
-
-      final result = await CloudFunctionService.fetchFrenchConjugations(translatedText);
-      // Conjugations.queryConjugations(result, currentSourceValueLang);
-    }
-  }
-
   void checkConjugations(String translatedText) async {
-    if (currentTargetValueLang == "Français") {
-      ConjugationResult? _conjugationResult = await Conjugations.fetchFrenchConjugations(translatedText, currentTargetValueLang);
-      if (_conjugationResult != null) {
-        setState(() {
-          conjugationResult = _conjugationResult;
-        });
-      } else {
-        setState(() {
-          conjugationResult = null;
-        });
-      }
+    ConjugationResult? _conjugationResult =
+        await Conjugations.fetchConjugations(
+            translatedText, currentTargetValueLang);
+    if (_conjugationResult != null) {
+      setState(() {
+        conjugationResult = _conjugationResult;
+      });
+    } else {
+      setState(() {
+        conjugationResult = null;
+      });
     }
   }
 
   Future<void> translateTargetText(String sourceLang, String targetLang) async {
-    if (currentTargetValueLang == "Français") {
+    if (currentTargetValueLang == "Français" ||
+        currentTargetValueLang == "Español" ||
+        currentTargetValueLang == "Deutsch") {
       checkConjugations(textToTranslate);
     }
     final translation = await translationService.translateText(
@@ -736,8 +730,10 @@ class _MainPageState extends State<MainPage> {
                                               context,
                                               ConjugationPage.routeName,
                                               arguments: ConjugationArguments(
-                                                conjugationResult!, // Make sure this is a ConjugationResult object
-                                                currentTargetValueLang, // String representing the target language
+                                                conjugationResult!,
+                                                // Make sure this is a ConjugationResult object
+                                                currentTargetValueLang,
+                                                // String representing the target language
                                                 currentSourceValueLang, // String representing the source language
                                               ),
                                             );
@@ -745,7 +741,10 @@ class _MainPageState extends State<MainPage> {
                                             // Add your button's onPressed functionality here
                                           },
                                           child: Text(
-                                              "Conjugate ${conjugationResult!.infinitive}", style: TextStyle(color: Colors.white),),
+                                            "Conjugate ${conjugationResult!.infinitive}",
+                                            style:
+                                                TextStyle(color: Colors.white),
+                                          ),
                                         )
                                       : Container(),
                                 ),
@@ -778,6 +777,6 @@ class ConjugationArguments {
   final String currentTargetValueLang;
   final String currentSourceValueLang;
 
-  ConjugationArguments(this.conjugationResult, this.currentTargetValueLang, this.currentSourceValueLang);
+  ConjugationArguments(this.conjugationResult, this.currentTargetValueLang,
+      this.currentSourceValueLang);
 }
-

@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:loading_skeleton_niu/loading_skeleton.dart';
 
 import '../models/core/conjugation/conjugation.dart';
@@ -20,11 +21,15 @@ class ConjugationPage extends StatefulWidget {
 }
 
 class _ConjugationPageState extends State<ConjugationPage> {
-
   @override
   Widget build(BuildContext context) {
+
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarColor: Color(0xFF00b894), // Change this color to your desired color
+      statusBarIconBrightness: Brightness.light, // Change the status bar icon color to
+    ));
     final ConjugationArguments args =
-    ModalRoute.of(context)!.settings.arguments as ConjugationArguments;
+        ModalRoute.of(context)!.settings.arguments as ConjugationArguments;
 
     return Scaffold(
       appBar: AppBar(
@@ -45,7 +50,10 @@ class _ConjugationPageState extends State<ConjugationPage> {
               style: TextStyle(fontSize: 36, fontWeight: FontWeight.w700),
             ),
             FutureBuilder<String>(
-              future: CloudFunctionService.get_gpt_translations(args.conjugationResult.infinitive, args.currentSourceValueLang, args.currentTargetValueLang),
+              future: CloudFunctionService.get_gpt_translations(
+                  args.conjugationResult.infinitive,
+                  args.currentSourceValueLang,
+                  args.currentTargetValueLang),
               builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return ClipRRect(
@@ -54,7 +62,7 @@ class _ConjugationPageState extends State<ConjugationPage> {
                     child: LoadingSkeleton(
                       width: 100,
                       height: 18,
-                      colors: [Colors.amber, Colors.purpleAccent, Colors.amber],
+                      colors: [Colors.grey, Colors.white, Colors.grey],
                     ),
                   ); // Show a loading indicator.
                 } else if (snapshot.hasError) {
@@ -73,9 +81,9 @@ class _ConjugationPageState extends State<ConjugationPage> {
               },
             ),
             Container(
-              height: 16,
+              height: 20,
             ),
-            ..._buildConjugationLists(args.conjugationResult),
+            ..._buildConjugationLists(args),
           ],
         ),
       ),
@@ -89,34 +97,39 @@ class _ConjugationPageState extends State<ConjugationPage> {
     return input[0].toUpperCase() + input.substring(1);
   }
 
-  List<Widget> _buildConjugationLists(ConjugationResult conjugationResult) {
+  List<Widget> _buildConjugationLists(ConjugationArguments args) {
     List<Widget> widgets = [];
-    for (Mood mood in conjugationResult.moods) {
+    for (Mood mood in args.conjugationResult.moods) {
       widgets.add(Text(
         mood.moodName,
         style: TextStyle(
-            fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blue),
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+          color: Theme.of(context).primaryColor,
+        ),
       ));
       for (Tense tense in mood.tenses) {
-        widgets.add(_buildColumn(tense.tenseName, tense.conjugations));
+        widgets.add(_buildColumn(tense.tenseName, tense.conjugations, args));
       }
     }
     return widgets;
   }
 
-  Widget _buildColumn(String title, List<Conjugation> conjugations) {
+  Widget _buildColumn(
+      String title, List<Conjugation> conjugations, ConjugationArguments args) {
     List<Widget> conjugationRows = conjugations.map((conjugation) {
       return Row(
         children: [
           Expanded(
+            flex: 3,
             child: Padding(
               padding: const EdgeInsets.all(4.0),
               child: Text(conjugation.pronoun,
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
             ),
           ),
-          SizedBox(width: 16.0),
           Expanded(
+            flex: 3,
             child: Padding(
               padding: const EdgeInsets.all(4.0),
               child: Text(conjugation.mainVerb,
@@ -124,17 +137,16 @@ class _ConjugationPageState extends State<ConjugationPage> {
             ),
           ),
           Expanded(
+            flex: 1,
             child: Padding(
               padding: const EdgeInsets.all(4.0),
               child: IconButton(
                 icon: const Icon(Icons.volume_up, color: Colors.black45),
                 onPressed: () {
-                  setState(() {
-                    TranslationService().speakText(
-                        conjugation.mainVerb,
-                        "Français",
-                    );
-                  });
+                  TranslationService().speakText(
+                    conjugation.mainVerb,
+                    args.currentTargetValueLang,
+                  );
                 },
               ),
             ),

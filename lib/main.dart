@@ -12,34 +12,17 @@ import 'package:flutter_svg/svg.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
   MyApp({super.key});
 
-  static const MaterialColor customGray = MaterialColor(
-    0xFFEDEDED, // Primary color value
-    <int, Color>{
-      50: Color(0xFFFAFAFA), // Lightest shade
-      100: Color(0xFFF5F5F5),
-      200: Color(0xFFEDEDED),
-      300: Color(0xFFE0E0E0),
-      400: Color(0xFFBDBDBD),
-      500: Color(0xFF9E9E9E), // Default shade
-      600: Color(0xFF757575),
-      700: Color(0xFF616161),
-      800: Color(0xFF424242),
-      900: Color(0xFF212121), // Darkest shade
-    },
-  );
 
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-      statusBarColor: const Color(0xFF008772), // Change the color to your desired color
-    ));
     return MaterialApp(
       theme: ThemeData(
         fontFamily: "AvertaStd",

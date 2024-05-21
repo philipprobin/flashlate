@@ -170,7 +170,6 @@ class _PracticePageState extends State<PracticePage> {
         children: [
           Container(
             height: statusBarHeight,
-            color: Colors.red,
           ),
           CounterRow(
             currentIndex: currentIndex,

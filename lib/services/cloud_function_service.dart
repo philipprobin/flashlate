@@ -73,15 +73,14 @@ class CloudFunctionService {
     }
   }
 
-  static Future<Map<String, dynamic>?> fetchFrenchConjugations(String verb) async {
-    const endpointUrl = "https://us-central1-flashlate-397020.cloudfunctions.net/spacyVerbRecognizer?verb=";
+  static Future<Map<String, dynamic>?> fetchFrenchConjugations(String verb, String language) async {
+    const endpointUrl = "https://us-central1-flashlate-397020.cloudfunctions.net/spacyVerbRecognizer";
 
-    final url = Uri.parse("$endpointUrl$verb");
+    final url = Uri.parse("$endpointUrl?verb=$verb&lang=$language");
     final headers = {"Content-Type": "application/json"};
-    final body = json.encode({"verb": verb});
 
     try {
-      final response = await http.post(url, headers: headers, body: body);
+      final response = await http.post(url, headers: headers);
 
       if (response.statusCode == 200) {
         // Convert the response to UTF-8
@@ -106,11 +105,12 @@ class CloudFunctionService {
   }
 
 
+
 }
 void main() async {
-  String translatedText = "parler"; // Example verb to fetch conjugations for
+  String translatedText = "gehen"; // Example verb to fetch conjugations for
   final result = await CloudFunctionService.fetchFrenchConjugations(
-      translatedText);
+      translatedText, "Deutsch");
 
   if (result != null && result.containsKey('lemmas') &&
       result['lemmas'].isNotEmpty) {
