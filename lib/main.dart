@@ -2,12 +2,14 @@ import 'package:double_back_to_close_app/double_back_to_close_app.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flashlate/screens/conjugation_page.dart';
 import 'package:flashlate/screens/list_page.dart';
-import 'package:flashlate/screens/main_page..dart';
+import 'package:flashlate/screens/main_page.dart';
 import 'package:flashlate/screens/practice_page.dart';
 import 'package:flashlate/services/authentification_service.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:provider/provider.dart';
+
+import 'helpers/language_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

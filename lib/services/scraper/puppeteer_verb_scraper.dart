@@ -44,8 +44,7 @@ void main() async {
           continue;
         }
         Map<String, dynamic> verbMap =
-            await lookForKonjugations(section, timeForms)
-                as Map<String, dynamic>;
+            await lookForKonjugations(section, timeForms);
 
         if (verbMap.isNotEmpty) {
           aggregateVerbMaps[moodForm] = verbMap;

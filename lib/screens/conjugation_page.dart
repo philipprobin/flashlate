@@ -1,17 +1,14 @@
-import 'dart:ui';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:loading_skeleton_niu/loading_skeleton.dart';
 
 import '../models/core/conjugation/conjugation.dart';
-import '../models/core/conjugation/conjugation_result.dart';
+import '../models/core/conjugation/conjugation_args.dart';
 import '../models/core/conjugation/mood.dart';
 import '../models/core/conjugation/tense.dart';
 import '../services/cloud_function_service.dart';
 import '../services/translation_service.dart';
-import 'main_page..dart';
 
 class ConjugationPage extends StatefulWidget {
   static const routeName = '/conjugation';

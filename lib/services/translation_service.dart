@@ -41,6 +41,13 @@ class TranslationService {
 
     final sourceCode = languageMap[source]!;
     final targetCode = languageMap[target]!;
+
+    if (sourceCode == targetCode) {
+      debugPrint("Error translating text, same lang: $sourceCode, $targetCode");
+      return text;
+    }
+
+
     final response = await http.post(url, body: {
       'key': apiKey,
       'q': text,
@@ -49,10 +56,11 @@ class TranslationService {
     });
 
     final data = json.decode(response.body);
-    debugPrint("other translations ${data}");
 
     // Extract the translated text
     String translatedText = data['data']['translations'][0]['translatedText'];
+
+    debugPrint("SOURCE $sourceCode: $text - TARGET $targetCode: $translatedText");
 
     // Decode HTML entities
     var document = parse(translatedText);

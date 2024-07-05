@@ -7,7 +7,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../screens/main_page..dart';
+import '../screens/main_page.dart';
 import 'database/auth.dart';
 
 class AuthenticationService extends StatefulWidget {

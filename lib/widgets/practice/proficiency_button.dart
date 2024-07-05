@@ -20,11 +20,11 @@ class ProficiencyButton extends StatelessWidget {
         child: OutlinedButton(
           onPressed: onPressed,
           style: ButtonStyle(
-            side: MaterialStateProperty.all(BorderSide(
+            side: WidgetStateProperty.all(BorderSide(
               color: color,
               width: 2.0,
             )),
-            foregroundColor: MaterialStateProperty.all(color),
+            foregroundColor: WidgetStateProperty.all(color),
           ),
           child: Text(text),
         ),
