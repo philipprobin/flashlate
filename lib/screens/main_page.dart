@@ -3,9 +3,11 @@ import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import '../helpers/language_preferences.dart';
 import '../helpers/translation_helper.dart';
 import '../helpers/debouncer.dart';
+import '../services/translation_service.dart';
 import '../widgets/app_bar_main_widget.dart';
 import '../widgets/current_deck_widget.dart';
 import '../widgets/main/add_to_deck_button.dart';
+import '../widgets/main/language_button_row.dart';
 import '../widgets/main/source_text_input_widget.dart';
 import '../widgets/main/target_text_input_widget.dart';
 
@@ -18,7 +20,7 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   final TranslationHelper translationHelper = TranslationHelper();
-  final Debouncer debouncer = Debouncer(milliseconds: 500);
+  final Debouncer debounce = Debouncer(milliseconds: 500);
 
   String textToTranslate = '';
   String translatedText = '';
@@ -46,6 +48,8 @@ class _MainPageState extends State<MainPage> {
     _retrieveLanguages();
   }
 
+
+
   Future<void> _initializeDeckNames() async {
     translationHelper.getDeckNames((deck, items) {
       setState(() {
@@ -68,10 +72,12 @@ class _MainPageState extends State<MainPage> {
     setState(() {
       if (!mode) {
         if (textToTranslate.isEmpty && translatedText.isNotEmpty) {
-          _translateAndSetText(targetLanguage, sourceLanguage, translatedText, sourceTextEditingController, true);
+          _translateAndSetText(targetLanguage, sourceLanguage, translatedText,
+              sourceTextEditingController);
         }
         if (textToTranslate.isNotEmpty && translatedText.isEmpty) {
-          _translateAndSetText(sourceLanguage, targetLanguage, textToTranslate, targetTextEditingController, false);
+          _translateAndSetText(sourceLanguage, targetLanguage, textToTranslate,
+              targetTextEditingController);
         }
       }
       editingMode = mode;
@@ -87,35 +93,21 @@ class _MainPageState extends State<MainPage> {
     sourceTextEditingController.text = '';
     textToTranslate = "";
   }
-
+  
   Future<void> _translateAndSetText(
       String sourceLang,
       String targetLang,
       String textToTranslate,
-      TextEditingController controller,
-      bool isSource) async {
-    if (isSource) {
-      await translationHelper.translateSourceText(
-          sourceLang, targetLang, textToTranslate, (translated) {
-        setState(() {
-          debugPrint("sourceLang: $sourceLang targetLang: $targetLang textToTranslate: $textToTranslate translated: $translated");
-          translatedText = translated;
-          controller.text = translated;
-        });
-      });
-    } else {
-      await translationHelper.translateTargetText(
-          sourceLang, targetLang, textToTranslate, (translated) {
-        setState(() {
-          debugPrint("sourceLang: $sourceLang targetLang: $targetLang textToTranslate: $textToTranslate translated: $translated");
-          translatedText = translated;
-          controller.text = translated;
-        });
-      });
-    }
+      TextEditingController controller,) async {
+    final translated = await TranslationService().translateText(sourceLang, targetLang, textToTranslate);
+    setState(() {
+      debugPrint("sourceLang: $sourceLang targetLang: $targetLang textToTranslate: $textToTranslate translated: $translated");
+      translatedText = translated;
+      controller.text = translated;
+    });
   }
 
-  Future<void> speakTextSourceWrapper(String text) async {
+Future<void> speakTextSourceWrapper(String text) async {
     translationHelper.speakTextWrapper(text, sourceLanguage);
   }
 
@@ -135,116 +127,121 @@ class _MainPageState extends State<MainPage> {
         body: sourceLanguage.isEmpty || targetLanguage.isEmpty
             ? Center(child: CircularProgressIndicator())
             : SingleChildScrollView(
-          child: Column(
-            children: [
-              TopBarWidget(
-                isEditingMode: (value) async {
-                  await refreshOnTogglePress(value);
-                },
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                 child: Column(
                   children: [
-                    CurrentDeckWidget(
-                      dropdownItems: dropdownItems,
-                      currentDropdownValue: currentDropdownValue,
-                      onDeckChanged: (newValue) {
-                        setState(() {
-                          currentDropdownValue = newValue;
-                        });
+                    TopBarWidget(
+                      isEditingMode: (value) async {
+                        await refreshOnTogglePress(value);
                       },
                     ),
-                    SourceTextInputWidget(
-                      controller: sourceTextEditingController,
-                      // initialSourceValueLang: sourceLanguage,
-                      // currentTargetValueLang: targetLanguage,
-                      editingMode: editingMode,
-                      onTextChanged: (value) {
-                        setState(() {
-                          textToTranslate = value;
-                          if (value.isEmpty) {
-                            translatedText = "";
-                          }
-                          debouncer.run(() {
-                            _translateAndSetText(
-                                sourceLanguage,
-                                targetLanguage,
-                                textToTranslate,
-                                targetTextEditingController,
-                                true);
-                          });
-                        });
-                      },
-                      // translateSourceText: translationHelper.translateSourceText,
-                      speakText: speakTextSourceWrapper,
-                      onClearText: () {
-                        setState(() {
-                          if (editingMode) {
-                            sourceTextDeleted();
-                          } else {
-                            sourceTextDeleted();
-                            targetTextDeleted();
-                          }
-                        });
-                      },
-                    ),
-                    TargetTextInputWidget(
-                      controller: targetTextEditingController,
-                      // initialTargetValueLang: targetLanguage,
-                      // currentSourceValueLang: sourceLanguage,
-                      editingMode: editingMode,
-                      onTextChanged: (value) {
-                        setState(() {
-                          textToTranslate = value;
-                          if (value.isEmpty) {
-                            translatedText = "";
-                          }
-                          debouncer.run(() {
-                            _translateAndSetText(
-                                targetLanguage,
-                                sourceLanguage,
-                                textToTranslate,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0, vertical: 8.0),
+                      child: Column(
+                        children: [
+                          LanguageButtonRow(
+                            onLangChanged: (String sourceLang, String targetLang) {
+                              setState(() {
+                                this.sourceLanguage = sourceLang;
+                                this.targetLanguage = targetLang;
+                              });
+                            },
+                          ),
+                          CurrentDeckWidget(
+                            dropdownItems: dropdownItems,
+                            currentDropdownValue: currentDropdownValue,
+                            onDeckChanged: (newValue) {
+                              setState(() {
+                                currentDropdownValue = newValue;
+                              });
+                            },
+                          ),
+                          SourceTextInputWidget(
+                            controller: sourceTextEditingController,
+                            editingMode: editingMode,
+                            onTextChanged: (value) {
+                              setState(() {
+                                textToTranslate = value;
+                                if (value.isEmpty) {
+                                  translatedText = "";
+                                }
+                                debounce.run(() {
+                                  _translateAndSetText(
+                                      sourceLanguage,
+                                      targetLanguage,
+                                      textToTranslate,
+                                      targetTextEditingController,
+                                      );
+                                });
+                              });
+                            },
+                            speakText: speakTextSourceWrapper,
+                            onClearText: () {
+                              setState(() {
+                                if (editingMode) {
+                                  sourceTextDeleted();
+                                } else {
+                                  sourceTextDeleted();
+                                  targetTextDeleted();
+                                }
+                              });
+                            },
+                          ),
+                          TargetTextInputWidget(
+                            controller: targetTextEditingController,
+                            editingMode: editingMode,
+                            onTextChanged: (value) {
+                              setState(() {
+                                textToTranslate = value;
+                                if (value.isEmpty) {
+                                  translatedText = "";
+                                }
+                                debounce.run(() {
+                                  _translateAndSetText(
+                                      targetLanguage,
+                                      sourceLanguage,
+                                      textToTranslate,
+                                      sourceTextEditingController,
+                                      );
+                                });
+                              });
+                            },
+                            speakText: speakTextTargetWrapper,
+                            onClearText: () {
+                              setState(() {
+                                if (editingMode) {
+                                  targetTextDeleted();
+                                } else {
+                                  sourceTextDeleted();
+                                  targetTextDeleted();
+                                }
+                              });
+                            },
+                            cornerRadius: cornerRadius,
+                            translateBoxHeight: translateBoxHeight,
+                            secondBoxColor: secondBoxColor,
+                          ),
+                          AddToCardDeckButton(
+                            sourceTextEditingController:
                                 sourceTextEditingController,
-                                false);
-                          });
-                        });
-                      },
-                      // translateTargetText: translationHelper.translateTargetText,
-                      speakText: speakTextTargetWrapper,
-                      onClearText: () {
-                        setState(() {
-                          if (editingMode) {
-                            targetTextDeleted();
-                          } else {
-                            sourceTextDeleted();
-                            targetTextDeleted();
-                          }
-                        });
-                      },
-                      cornerRadius: cornerRadius,
-                      translateBoxHeight: translateBoxHeight,
-                      secondBoxColor: secondBoxColor,
-                    ),
-                    AddToCardDeckButton(
-                      sourceTextEditingController: sourceTextEditingController,
-                      targetTextEditingController: targetTextEditingController,
-                      cornerRadius: cornerRadius,
-                      addBoxPadding: addBoxPadding,
-                      addBoxColor: addBoxColor,
-                      onSuccess: () {
-                        setState(() {
-                          targetTextEditingController.text = "";
-                          sourceTextEditingController.text = "";
-                        });
-                      },
+                            targetTextEditingController:
+                                targetTextEditingController,
+                            cornerRadius: cornerRadius,
+                            addBoxPadding: addBoxPadding,
+                            addBoxColor: addBoxColor,
+                            onSuccess: () {
+                              setState(() {
+                                targetTextEditingController.text = "";
+                                sourceTextEditingController.text = "";
+                              });
+                            },
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
-            ],
-          ),
-        ),
       );
     });
   }

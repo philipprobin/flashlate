@@ -1,29 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../helpers/language_preferences.dart';
-import '../../utils/supported_languages.dart';
 import 'icon_buttons/clear_button.dart';
 import 'icon_buttons/copy_paste_button.dart';
 import 'icon_buttons/speak_button.dart';
 
 class SourceTextInputWidget extends StatefulWidget {
   final TextEditingController controller;
-  // final String initialSourceValueLang;
-  // final String currentTargetValueLang;
   final bool editingMode;
   final Function(String) onTextChanged;
-  // final Function(String, String, String, Function(String)) translateSourceText;
   final Function(String) speakText;
   final VoidCallback onClearText;
 
   SourceTextInputWidget({
     Key? key,
     required this.controller,
-    // required this.initialSourceValueLang,
-    // required this.currentTargetValueLang,
     required this.editingMode,
     required this.onTextChanged,
-    // required this.translateSourceText,
     required this.speakText,
     required this.onClearText,
   }) : super(key: key);
@@ -33,21 +25,7 @@ class SourceTextInputWidget extends StatefulWidget {
 }
 
 class _SourceTextInputWidgetState extends State<SourceTextInputWidget> {
-  String currentSourceValueLang = "Deutsch";
-  final List<String> translationLanguages = SupportedLanguages.translationLanguages;
 
-  @override
-  void initState() {
-    super.initState();
-    _initializeSourceLang();
-  }
-
-  Future<void> _initializeSourceLang() async {
-    final sourceLang = await LanguagePreferences().sourceLanguage;
-    setState(() {
-      currentSourceValueLang = sourceLang;
-    });
-  }
 
   Future<void> _pasteFromClipboard(TextEditingController controller) async {
     final clipboardData = await Clipboard.getData(Clipboard.kTextPlain);
@@ -55,16 +33,6 @@ class _SourceTextInputWidgetState extends State<SourceTextInputWidget> {
       setState(() {
         controller.text = clipboardData.text ?? '';
         widget.onTextChanged(controller.text);
-        // widget.translateSourceText(
-        //   currentSourceValueLang,
-        //   widget.currentTargetValueLang,
-        //   controller.text,
-        //       (translation) {
-        //     setState(() {
-        //       widget.controller.text = translation;
-        //     });
-        //   },
-        // );
       });
     }
   }
@@ -97,16 +65,6 @@ class _SourceTextInputWidgetState extends State<SourceTextInputWidget> {
                     onChanged: (value) {
                       if (!widget.editingMode) {
                         widget.onTextChanged(value);
-                        // widget.translateSourceText(
-                        //   currentSourceValueLang,
-                        //   widget.currentTargetValueLang,
-                        //   value,
-                        //       (translation) {
-                        //     setState(() {
-                        //       // widget.controller.text = translation;
-                        //     });
-                        //   },
-                        // );
                       }
                       setState(() {});
                     },
@@ -162,28 +120,6 @@ class _SourceTextInputWidgetState extends State<SourceTextInputWidget> {
                     color: Color(0xFFbcbcbd),
                     fontSize: 16,
                     fontWeight: FontWeight.w300,
-                  ),
-                ),
-              ),
-              Positioned(
-                top: 5,
-                left: 15,
-                child: Container(
-                  color: Colors.white,
-                  child: DropdownButton<String>(
-                    items: translationLanguages.map((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
-                      );
-                    }).toList(),
-                    value: currentSourceValueLang,
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        currentSourceValueLang = newValue!;
-                        LanguagePreferences().setSourceLanguage(newValue);
-                      });
-                    },
                   ),
                 ),
               ),

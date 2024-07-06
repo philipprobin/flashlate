@@ -2,15 +2,22 @@ import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
 
+import '../helpers/language_preferences.dart';
 import 'database/conjugations.dart';
 
 class CloudFunctionService {
+  static LanguagePreferences languagePreferences = LanguagePreferences();
+
+
   static Future<String> get_gpt_translations(
-      String verb, String currentSourceValueLang, String currentTargetValueLang) async {
+      String verb) async {
+
+    final sourceLang = await languagePreferences.sourceLanguage;
+    final targetLang = await languagePreferences.targetLanguage;
     const parameterlessUrl =
         "https://us-central1-flashlate-397020.cloudfunctions.net/gpt_translate_function?verb=";
     final url =
-        Uri.parse("$parameterlessUrl$verb&sourceLang=$currentSourceValueLang");
+        Uri.parse("$parameterlessUrl$verb&sourceLang=$sourceLang");
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
@@ -19,7 +26,7 @@ class CloudFunctionService {
       // Handle the response data here.
       String shortenedGptTranslation = extractStringUntil5thComma(responseBody);
       debugPrint("get_gpt_translation - verb $verb");
-      Conjugations.uploadGptTranslation(currentSourceValueLang, currentTargetValueLang, verb, shortenedGptTranslation);
+      Conjugations.uploadGptTranslation(sourceLang, targetLang, verb, shortenedGptTranslation);
       return shortenedGptTranslation;
     } else {
       // Handle the error if the response has a different status code.

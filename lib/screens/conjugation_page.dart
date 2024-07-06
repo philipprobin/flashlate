@@ -48,9 +48,7 @@ class _ConjugationPageState extends State<ConjugationPage> {
             ),
             FutureBuilder<String>(
               future: CloudFunctionService.get_gpt_translations(
-                  args.conjugationResult.infinitive,
-                  args.currentSourceValueLang,
-                  args.currentTargetValueLang),
+                  args.conjugationResult.infinitive),
               builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return ClipRRect(

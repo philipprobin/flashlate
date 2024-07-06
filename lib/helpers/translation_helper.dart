@@ -10,6 +10,14 @@ class TranslationHelper {
   final TranslationService translationService = TranslationService();
   final LocalStorageService localStorageService = LocalStorageService();
 
+  void checkConjugations(String translatedText, String targetLang,
+      Function(ConjugationResult?) updateConjugationResult) async {
+    ConjugationResult? conjugationResult =
+    await Conjugations.fetchConjugations(translatedText, targetLang);
+    debugPrint("conjugationResult: $conjugationResult");
+    updateConjugationResult(conjugationResult);
+  }
+
   Future<void> loadDropdownLangValuesFromPreferences(
       Function(String, String) updateLangs) async {
     String? currentSourceLang =
@@ -47,21 +55,6 @@ class TranslationHelper {
     updateDecks(currentDeck, fetchedItems);
   }
 
-  Future<void> translateSourceText(String sourceLang, String targetLang,
-      String textToTranslate, Function(String) updateTranslatedText) async {
-    final translation = await translationService.translateText(
-        sourceLang, targetLang, textToTranslate);
-    updateTranslatedText(translation);
-  }
-
-  Future<void> translateTargetText(String sourceLang, String targetLang,
-      String textToTranslate, Function(String) updateTranslatedText) async {
-    final translation = await translationService.translateText(
-         sourceLang, targetLang, textToTranslate);
-
-    updateTranslatedText(translation);
-  }
-
   Future<void> speakTextWrapper(String text, String lang) async {
     await translationService.speakText(text, lang);
   }
@@ -72,10 +65,5 @@ class TranslationHelper {
         textEditingController.text, currentLanguage);
   }
 
-  void checkConjugations(String translatedText, String targetLang,
-      Function(ConjugationResult?) updateConjugationResult) async {
-    ConjugationResult? conjugationResult =
-        await Conjugations.fetchConjugations(translatedText, targetLang);
-    updateConjugationResult(conjugationResult);
-  }
+
 }

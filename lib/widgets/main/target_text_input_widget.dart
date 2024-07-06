@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../helpers/language_preferences.dart';
-import '../../utils/supported_languages.dart';
+import '../../helpers/debouncer.dart';
+import '../../helpers/language_preferences.dart';
+import '../../models/core/conjugation/conjugation_args.dart';
+import '../../models/core/conjugation/conjugation_result.dart';
+import '../../screens/conjugation_page.dart';
 import 'icon_buttons/clear_button.dart';
 import 'icon_buttons/copy_paste_button.dart';
 import 'icon_buttons/speak_button.dart';
+import '../../helpers/translation_helper.dart';
 
 class TargetTextInputWidget extends StatefulWidget {
   final TextEditingController controller;
-  // final String initialTargetValueLang;
-  // final String currentSourceValueLang;
   final bool editingMode;
   final Function(String) onTextChanged;
-  // final Function(String, String, String, Function(String)) translateTargetText;
   final Function(String) speakText;
   final VoidCallback onClearText;
   final double cornerRadius;
@@ -22,11 +23,8 @@ class TargetTextInputWidget extends StatefulWidget {
   TargetTextInputWidget({
     Key? key,
     required this.controller,
-    // required this.initialTargetValueLang,
-    // required this.currentSourceValueLang,
     required this.editingMode,
     required this.onTextChanged,
-    // required this.translateTargetText,
     required this.speakText,
     required this.onClearText,
     required this.cornerRadius,
@@ -39,21 +37,10 @@ class TargetTextInputWidget extends StatefulWidget {
 }
 
 class _TargetTextInputWidgetState extends State<TargetTextInputWidget> {
-  String currentTargetValueLang = "Español";
-  final List<String> translationLanguages = SupportedLanguages.translationLanguages;
+  ConjugationResult? conjugationResult;
+  final TranslationHelper translationHelper = TranslationHelper();
 
-  @override
-  void initState() {
-    super.initState();
-    _initializeTargetLang();
-  }
-
-  Future<void> _initializeTargetLang() async {
-    final targetLang = await LanguagePreferences().targetLanguage;
-    setState(() {
-      currentTargetValueLang = targetLang;
-    });
-  }
+  final Debouncer debounce = Debouncer(milliseconds: 500);
 
   Future<void> _pasteFromClipboard(TextEditingController controller) async {
     final clipboardData = await Clipboard.getData(Clipboard.kTextPlain);
@@ -61,16 +48,56 @@ class _TargetTextInputWidgetState extends State<TargetTextInputWidget> {
       setState(() {
         controller.text = clipboardData.text ?? '';
         widget.onTextChanged(controller.text);
-        // widget.translateTargetText(
-        //   currentTargetValueLang,
-        //   widget.currentSourceValueLang,
-        //   controller.text,
-        //       (translation) {
-        //     setState(() {
-        //       widget.controller.text = translation;
-        //     });
-        //   },
-        // );
+        _checkConjugations(controller.text);
+      });
+    }
+  }
+
+  String currentTargetValueLang = "Español";
+  String currentSourceValueLang = "Deutsch";
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeSourceLang();
+
+    widget.controller.addListener(_onTextChanged);
+  }
+
+  Future<void> _initializeSourceLang() async {
+    final sourceLang = await LanguagePreferences().sourceLanguage;
+    final targetLang = await LanguagePreferences().targetLanguage;
+    setState(() {
+      currentSourceValueLang = sourceLang;
+      currentTargetValueLang = targetLang;
+    });
+  }
+
+  @override
+  void dispose() {
+    // Dispose of the controller when the widget is disposed
+    widget.controller.dispose();
+    super.dispose();
+  }
+
+  // The function that gets called whenever the text changes
+  void _onTextChanged() {
+    debounce.run(() {
+      print("Text has changed: ${widget.controller.text}");
+      _checkConjugations(widget.controller.text);
+      // Your debounced logic here
+    });
+  }
+
+  void _checkConjugations(String text) {
+    if (currentTargetValueLang == "Français" ||
+        currentTargetValueLang == "Español" ||
+        currentTargetValueLang == "Deutsch") {
+      translationHelper.checkConjugations(text, currentTargetValueLang,
+          (result) {
+        setState(() {
+          conjugationResult = result;
+        });
       });
     }
   }
@@ -102,26 +129,6 @@ class _TargetTextInputWidgetState extends State<TargetTextInputWidget> {
                 ),
               ),
             ),
-            Positioned(
-              top: 5,
-              left: 15,
-              child: DropdownButton<String>(
-                items: translationLanguages.map((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
-                value: currentTargetValueLang,
-                onChanged: (String? newValue) {
-                  setState(() {
-                    currentTargetValueLang = newValue!;
-                    debugPrint("new dropdownvalue: $currentTargetValueLang");
-                    LanguagePreferences().setTargetLanguage(newValue);
-                  });
-                },
-              ),
-            ),
             Padding(
               padding: const EdgeInsets.all(32.0),
               child: Center(
@@ -130,16 +137,6 @@ class _TargetTextInputWidgetState extends State<TargetTextInputWidget> {
                   onChanged: (value) {
                     if (!widget.editingMode) {
                       widget.onTextChanged(value);
-                      // widget.translateTargetText(
-                      //   currentTargetValueLang,
-                      //   widget.currentSourceValueLang,
-                      //   value,
-                      //       (translation) {
-                      //     setState(() {
-                      //       // widget.controller.text = translation;
-                      //     });
-                      //   },
-                      // );
                     }
                     setState(() {});
                   },
@@ -186,6 +183,37 @@ class _TargetTextInputWidgetState extends State<TargetTextInputWidget> {
                     ),
                 ],
               ),
+            ),
+            Positioned(
+              bottom: 0,
+              left: 10,
+              child: (conjugationResult != null)
+                  ? ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).indicatorColor,
+                      ),
+                      onPressed: () {
+                        if (conjugationResult != null) {
+                          Navigator.pushNamed(
+                            context,
+                            ConjugationPage.routeName,
+                            arguments: ConjugationArguments(
+                              conjugationResult!,
+                              currentTargetValueLang,
+                              currentSourceValueLang,
+                            ),
+                          );
+                        } else {
+                          debugPrint("conjugationResult == null");
+                        }
+                      },
+                      // todo check why conjugationResult is not triggered
+                      child: Text(
+                        "Conjugate ${conjugationResult!.infinitive}",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    )
+                  : Container(),
             ),
           ],
         ),
