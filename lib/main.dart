@@ -32,7 +32,7 @@ class MyApp extends StatelessWidget {
         secondaryHeaderColor: const Color(0xFFececed), //ButtonColor
         highlightColor: const Color(0xFF303434),
         indicatorColor: const Color(0xFFE17055),
-        splashColor: const Color(0xFFFDCB6E),
+
         // Set the accent color
         scaffoldBackgroundColor: const Color(0xFFF8F7F8),
         // canvasColor: const Color(0xFF2d3436),
@@ -96,6 +96,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    Color appBarColor = const Color(0xFF2d3436);
     return Scaffold(
       body: DoubleBackToCloseApp(
         child: _tabs[_currentIndex],
@@ -104,7 +105,8 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.black,
+        unselectedItemColor: appBarColor,
+        backgroundColor: appBarColor,
         currentIndex: _currentIndex,
         selectedItemColor: Theme.of(context).primaryColor,
         onTap: _onTabTapped,

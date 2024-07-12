@@ -37,6 +37,7 @@ class _MainPageState extends State<MainPage> {
   List<String> dropdownItems = [];
 
   late LanguagePreferences languagePreferences;
+  bool _isEditingMode = false;
   String sourceLanguage = '';
   String targetLanguage = '';
 
@@ -47,8 +48,6 @@ class _MainPageState extends State<MainPage> {
     _initializeDeckNames();
     _retrieveLanguages();
   }
-
-
 
   Future<void> _initializeDeckNames() async {
     translationHelper.getDeckNames((deck, items) {
@@ -93,21 +92,24 @@ class _MainPageState extends State<MainPage> {
     sourceTextEditingController.text = '';
     textToTranslate = "";
   }
-  
+
   Future<void> _translateAndSetText(
-      String sourceLang,
-      String targetLang,
-      String textToTranslate,
-      TextEditingController controller,) async {
-    final translated = await TranslationService().translateText(sourceLang, targetLang, textToTranslate);
+    String sourceLang,
+    String targetLang,
+    String textToTranslate,
+    TextEditingController controller,
+  ) async {
+    final translated = await TranslationService()
+        .translateText(sourceLang, targetLang, textToTranslate);
     setState(() {
-      debugPrint("sourceLang: $sourceLang targetLang: $targetLang textToTranslate: $textToTranslate translated: $translated");
+      debugPrint(
+          "sourceLang: $sourceLang targetLang: $targetLang textToTranslate: $textToTranslate translated: $translated");
       translatedText = translated;
       controller.text = translated;
     });
   }
 
-Future<void> speakTextSourceWrapper(String text) async {
+  Future<void> speakTextSourceWrapper(String text) async {
     translationHelper.speakTextWrapper(text, sourceLanguage);
   }
 
@@ -129,32 +131,51 @@ Future<void> speakTextSourceWrapper(String text) async {
             : SingleChildScrollView(
                 child: Column(
                   children: [
-                    TopBarWidget(
-                      isEditingMode: (value) async {
-                        await refreshOnTogglePress(value);
-                      },
-                    ),
+                    TopBarWidget(),
                     Padding(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16.0, vertical: 8.0),
                       child: Column(
                         children: [
                           LanguageButtonRow(
-                            onLangChanged: (String sourceLang, String targetLang) {
-                              setState(() {
-                                this.sourceLanguage = sourceLang;
-                                this.targetLanguage = targetLang;
-                              });
+                            onLangChanged:
+                                (String sourceLang, String targetLang) {
+                              this.sourceLanguage = sourceLang;
+                              this.targetLanguage = targetLang;
+                              setState(() {});
                             },
                           ),
-                          CurrentDeckWidget(
-                            dropdownItems: dropdownItems,
-                            currentDropdownValue: currentDropdownValue,
-                            onDeckChanged: (newValue) {
-                              setState(() {
-                                currentDropdownValue = newValue;
-                              });
-                            },
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              CurrentDeckWidget(
+                                dropdownItems: dropdownItems,
+                                currentDropdownValue: currentDropdownValue,
+                                onDeckChanged: (newValue) {
+                                  setState(() {
+                                    currentDropdownValue = newValue;
+                                  });
+                                },
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: ElevatedButton.icon(
+                                  onPressed: () async {
+                                    setState(() {
+                                      _isEditingMode = !_isEditingMode;
+                                    });
+                                    await refreshOnTogglePress(_isEditingMode);
+                                  },
+                                  icon: Icon(Icons.edit, color: Colors.white),
+                                  label: Text('edit', style: TextStyle(color: Colors.white)),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: _isEditingMode
+                                        ? Color(0xFFFDCB6E)
+                                        : Colors.grey[600],
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                           SourceTextInputWidget(
                             controller: sourceTextEditingController,
@@ -167,11 +188,11 @@ Future<void> speakTextSourceWrapper(String text) async {
                                 }
                                 debounce.run(() {
                                   _translateAndSetText(
-                                      sourceLanguage,
-                                      targetLanguage,
-                                      textToTranslate,
-                                      targetTextEditingController,
-                                      );
+                                    sourceLanguage,
+                                    targetLanguage,
+                                    textToTranslate,
+                                    targetTextEditingController,
+                                  );
                                 });
                               });
                             },
@@ -198,11 +219,11 @@ Future<void> speakTextSourceWrapper(String text) async {
                                 }
                                 debounce.run(() {
                                   _translateAndSetText(
-                                      targetLanguage,
-                                      sourceLanguage,
-                                      textToTranslate,
-                                      sourceTextEditingController,
-                                      );
+                                    targetLanguage,
+                                    sourceLanguage,
+                                    textToTranslate,
+                                    sourceTextEditingController,
+                                  );
                                 });
                               });
                             },

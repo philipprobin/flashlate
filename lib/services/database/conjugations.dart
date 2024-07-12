@@ -134,7 +134,7 @@ class Conjugations {
   }
 
   static Future<ConjugationResult?> fetchConjugations(String translatedText, String language) async {
-    final result = await CloudFunctionService.fetchFrenchConjugations(
+    final result = await CloudFunctionService.fetchCloudConjugations(
         translatedText, language);
 
     if (result != null && result.containsKey('lemmas') &&

@@ -23,7 +23,7 @@ class _CurrentDeckWidgetState extends State<CurrentDeckWidget> {
     return Padding(
       padding: const EdgeInsets.all(8),
       child: Container(
-        height: 32,
+        height: 42,
         decoration: BoxDecoration(
           color: Theme.of(context).indicatorColor,
           borderRadius: const BorderRadius.all(
@@ -33,11 +33,13 @@ class _CurrentDeckWidgetState extends State<CurrentDeckWidget> {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: DropdownButtonHideUnderline(
           child: DropdownButton<String>(
-            icon: const Icon(null),
+            icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
             borderRadius: const BorderRadius.all(Radius.circular(8)),
             dropdownColor: Theme.of(context).indicatorColor,
             value: widget.currentDropdownValue.isEmpty
-                ? (widget.dropdownItems.isNotEmpty ? widget.dropdownItems[0] : null)
+                ? (widget.dropdownItems.isNotEmpty
+                    ? widget.dropdownItems[0]
+                    : null)
                 : widget.currentDropdownValue,
             onChanged: (String? newValue) {
               widget.onDeckChanged(newValue!);
@@ -46,7 +48,7 @@ class _CurrentDeckWidgetState extends State<CurrentDeckWidget> {
               });
             },
             items: widget.dropdownItems.map<DropdownMenuItem<String>>(
-                  (String value) {
+              (String value) {
                 return DropdownMenuItem<String>(
                   value: value,
                   child: Center(

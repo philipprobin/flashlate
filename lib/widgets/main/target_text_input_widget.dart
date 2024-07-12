@@ -82,8 +82,10 @@ class _TargetTextInputWidgetState extends State<TargetTextInputWidget> {
 
   // The function that gets called whenever the text changes
   void _onTextChanged() {
-    debounce.run(() {
+    debounce.run(() async {
+      currentTargetValueLang = await LanguagePreferences().targetLanguage;
       print("Text has changed: ${widget.controller.text}");
+      // set currentTargetValueLang from notifier here
       _checkConjugations(widget.controller.text);
       // Your debounced logic here
     });
@@ -93,6 +95,7 @@ class _TargetTextInputWidgetState extends State<TargetTextInputWidget> {
     if (currentTargetValueLang == "Français" ||
         currentTargetValueLang == "Español" ||
         currentTargetValueLang == "Deutsch") {
+      debugPrint("My currentTargetValueLang: $currentTargetValueLang");
       translationHelper.checkConjugations(text, currentTargetValueLang,
           (result) {
         setState(() {

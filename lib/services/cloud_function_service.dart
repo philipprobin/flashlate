@@ -44,46 +44,12 @@ class CloudFunctionService {
     }
   }
 
-  // not in use, switch to firebase call Database.queryConjugation
-  static Future<Map<String, dynamic>?> fetchSpanishConjugations(
-      String verb, String currentSourceValueLang) async {
-    const parameterlessUrl =
-        "https://us-central1-flashlate-397020.cloudfunctions.net/check_is_spanish_verb?verb=";
-    final url =
-        Uri.parse("$parameterlessUrl$verb&sourceLang=$currentSourceValueLang");
 
-    try {
-      final response = await http.get(url);
-
-      if (response.statusCode == 200) {
-        // Convert the response to UTF-8
-        final utf8Response = utf8.decode(response.bodyBytes);
-
-        // Parse the JSON
-        final jsonResult = json.decode(utf8Response);
-
-        // Save the JSON to a file (optional)
-        // You can use the `path_provider` package to manage file I/O.
-
-        // Print the JSON result
-        print("jsonresult $jsonResult");
-        return jsonResult;
-      } else {
-        // Handle HTTP error
-        print('HTTP Error: ${response.statusCode}');
-        return null;
-      }
-    } catch (error) {
-      // Handle network or other errors
-      print('Error: $error');
-      return null;
-    }
-  }
-
-  static Future<Map<String, dynamic>?> fetchFrenchConjugations(String verb, String language) async {
-    const endpointUrl = "https://us-central1-flashlate-397020.cloudfunctions.net/spacyVerbRecognizer";
+  static Future<Map<String, dynamic>?> fetchCloudConjugations(String verb, String language) async {
+    const endpointUrl = "https://flashlate-service-rstp6ycefq-ey.a.run.app";
 
     final url = Uri.parse("$endpointUrl?verb=$verb&lang=$language");
+    debugPrint("fetchFrenchConjugations - url $url");
     final headers = {"Content-Type": "application/json"};
 
     try {
@@ -116,7 +82,7 @@ class CloudFunctionService {
 }
 void main() async {
   String translatedText = "gehen"; // Example verb to fetch conjugations for
-  final result = await CloudFunctionService.fetchFrenchConjugations(
+  final result = await CloudFunctionService.fetchCloudConjugations(
       translatedText, "Deutsch");
 
   if (result != null && result.containsKey('lemmas') &&
