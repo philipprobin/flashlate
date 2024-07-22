@@ -3,10 +3,11 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:html/parser.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:flashlate/api_key.dart';
 
 import 'package:html/dom.dart' as dom;
 import 'package:flutter/material.dart';
+
+import '../api_key.dart';
 
 class TranslationService {
   final String apiKey = ApiKey.googleTranslateApiKey;

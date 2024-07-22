@@ -24,5 +24,4 @@ class Auth{
     print(userCredential.user);
     return userCredential;
   }
-
 }

@@ -59,7 +59,7 @@ class _PracticePageState extends State<PracticePage> {
         await LocalStorageService.getReviewMode("rEvIeWmOde-$currentDeck");
     int fetchedIndex = await LocalStorageService.getIndex("iNdEx-$currentDeck");
 
-    List<Map<String, dynamic>> cardsList = [];
+    List<Map<String, dynamic>>? cardsList = [];
     debugPrint("isReviewMode: $isReviewMode");
     // get List<Map> with translate and toLearn, create if not exist
     cardsList = await LocalStorageService.getPracticeDeck(currentDeck);
@@ -74,19 +74,20 @@ class _PracticePageState extends State<PracticePage> {
     // check if all already solved:  all cards are titled with I KNOW, (allSolved)
     bool allSolved = await LocalStorageService.allSolved(
         isReviewMode ? "rEvIeWDeCk-$currentDeck" : "pRaCtIcEmOde-$currentDeck");
-    if (cardsList.length > 0 && allSolved) {
+    if (cardsList != null && cardsList.length > 0 && allSolved) {
       _showCustomPopupDialog(context, true);
     }
 
     setState(() {
       if (fetchedIndex < 0) {
         fetchedIndex = 0;
+        pageController = PageController(initialPage: fetchedIndex);
+        userDeck = cardsList!;
+        debugPrint("list elements ${userDeck.length}");
+        currentIndex = fetchedIndex;
+        _setKnownCardsNumbers(currentIndex);
       }
-      pageController = PageController(initialPage: fetchedIndex);
-      userDeck = cardsList;
-      debugPrint("list elements ${userDeck.length}");
-      currentIndex = fetchedIndex;
-      _setKnownCardsNumbers(currentIndex);
+
     });
   }
 
