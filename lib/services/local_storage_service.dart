@@ -497,7 +497,7 @@ class LocalStorageService {
     await prefs.setStringList(deckName, updatedEncodedDeck);
   }
 
-  static Future<List<Map<String, dynamic>>> getPracticeDeck(String deckName) async {
+  static Future<List<Map<String, dynamic>>?> getPracticeDeck(String deckName) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     // Define the keys for the original deck and practice mode deck.
     final String originalDeckKey = deckName;
@@ -532,7 +532,7 @@ class LocalStorageService {
         await prefs.setStringList(practiceModeDeckKey, practiceModeDeckJsonList);
       } else {
         // Handle the case when the original deck doesn't exist.
-        throw Exception("The original deck '$deckName' doesn't exist.");
+        debugPrint("The original deck '$deckName' doesn't exist.");
       }
     }
 
@@ -545,7 +545,8 @@ class LocalStorageService {
       return practiceModeDeckData;
     } else {
       // Handle the case when the practice mode deck doesn't exist.
-      throw Exception("The practice mode deck for '$deckName' doesn't exist.");
+      debugPrint("The practice mode deck for '$deckName' doesn't exist.");
+      return null;
     }
   }
 
