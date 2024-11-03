@@ -217,7 +217,7 @@ class _PracticePageState extends State<PracticePage> {
                                             // You might need to adapt this part to your actual data handling and services
                                             TranslationService().speakText(
                                                 userDeck[index]["translation"].values.first.toString(),
-                                                "Français",
+                                                "Tiếng Việt",
                                             );
                                           });
                                         },

@@ -6,7 +6,8 @@ class SupportedLanguages{
     "Français",
     "Polski",
     "Português",
-    "Italiano"
+    "Italiano",
+    "Tiếng Việt"
   ];
 
   static List<String> communityLanguages = [
@@ -16,7 +17,8 @@ class SupportedLanguages{
     "Français",
     "Polski",
     "Português",
-    "Italiano"
+    "Italiano",
+    "Tiếng Việt"
   ];
 
   static Map<String, String> languageMap = {
@@ -26,6 +28,7 @@ class SupportedLanguages{
     "Français": "fr",
     "Polski": "pl",
     "Português": "pt",
-    "Italiano": "it"
+    "Italiano": "it",
+    "Tiếng Việt": "vi",
   };
 }

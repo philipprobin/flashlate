@@ -22,7 +22,9 @@ class TranslationService {
     "Français" : "fr",
     "Polski" : "pl",
     "Português" : "pt",
-    "Italiano" : "it"
+    "Italiano" : "it",
+    "Tiếng Việt" : "vi",
+
   };
 
   // text to speech
@@ -33,7 +35,8 @@ class TranslationService {
     "Français" : "fr-FR",
     "Polski" : "pl-PL",
     "Português" : "pt-BR",
-    "Italiano" : "it-IT"
+    "Italiano" : "it-IT",
+    "Tiếng Việt" : "vi-VN",
   };
 
   Future<String> translateText(String source, String target, String text) async {
