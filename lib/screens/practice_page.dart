@@ -78,15 +78,18 @@ class _PracticePageState extends State<PracticePage> {
       _showCustomPopupDialog(context, true);
     }
 
+    debugPrint("passed allSolved check fetchedIndex: $fetchedIndex");
+
     setState(() {
       if (fetchedIndex < 0) {
         fetchedIndex = 0;
+      }
         pageController = PageController(initialPage: fetchedIndex);
         userDeck = cardsList!;
         debugPrint("list elements ${userDeck.length}");
         currentIndex = fetchedIndex;
         _setKnownCardsNumbers(currentIndex);
-      }
+
 
     });
   }
